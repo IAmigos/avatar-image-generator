@@ -70,10 +70,6 @@ def get_image(data_path, key, items, num_images, name_target_file):
         pass
 
 def parse_data(data_path, num_ppl, num_images, name_target_file):
-	""" data_path: path from images
-		num_ppl: number of people
-		num_images: number of images per person
-		name_target_file: filename where everything is saved"""
   content = {}
   dirs = lambda f: data_path +'/'+ f
   files = os.listdir(data_path)
