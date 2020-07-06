@@ -29,11 +29,12 @@ def read_file(path):
     lines = in_file.readlines()
   return [get_(x) for x in lines]
 
-def get_image(data_path, key, items, num_images, name_target_file):
+def get_image(data_path, key, items, num_images, target_path):
   """ Downloads the image from a given url , crops it and saves it locally"""
 
   ##dir_path = os.path.join(os.path.dirname(data_path), 'faces') + '/' + key
-  dir_path = os.path.join(os.path.dirname(data_path), name_target_file)
+  ##dir_path = os.path.join(os.path.dirname(data_path), name_target_file)
+  dir_path = os.path.dirname(target_path)
 
   gmkdir(dir_path)
   im_cropped = None
@@ -69,7 +70,7 @@ def get_image(data_path, key, items, num_images, name_target_file):
       except Exception as e:
         pass
 
-def parse_data(data_path, num_ppl, num_images, name_target_file):
+def parse_data(data_path, num_ppl, num_images, target_path):
   content = {}
   dirs = lambda f: data_path +'/'+ f
   files = os.listdir(data_path)
@@ -81,4 +82,4 @@ def parse_data(data_path, num_ppl, num_images, name_target_file):
   pbar = tqdm(keys[:num_ppl])
   for key in pbar:
     pbar.set_description("Processing %s" % key)
-    get_image(data_path, key, content[key], num_images, name_target_file)
+    get_image(data_path, key, content[key], num_images, target_path)
