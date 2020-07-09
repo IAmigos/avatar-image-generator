@@ -29,7 +29,7 @@ def read_file(path):
     lines = in_file.readlines()
   return [get_(x) for x in lines]
 
-def get_image(data_path, key, items, num_images, target_path):
+def get_image(data_path, key, items, num_images, target_path, offset_x, offset_y):
   """ Downloads the image from a given url , crops it and saves it locally"""
 
   ##dir_path = os.path.join(os.path.dirname(data_path), 'faces') + '/' + key
@@ -47,7 +47,7 @@ def get_image(data_path, key, items, num_images, target_path):
       response = requests.get(url, stream=True)
       response.raw.decode_content = True
       im = Image.open(response.raw)
-      im_cropped = im.crop((x1, y1, x2, y2))
+      im_cropped = im.crop((x1-offset_x, y1-offset_y, x2+offset_x, y2+offset_y))
       return im_cropped
     except NotFound:
       print('404')
@@ -70,7 +70,7 @@ def get_image(data_path, key, items, num_images, target_path):
       except Exception as e:
         pass
 
-def parse_data(data_path, num_ppl, num_images, target_path):
+def parse_data(data_path, num_ppl, num_images, target_path, offset_x, offset_y):
   content = {}
   dirs = lambda f: data_path +'/'+ f
   files = os.listdir(data_path)
@@ -82,4 +82,4 @@ def parse_data(data_path, num_ppl, num_images, target_path):
   pbar = tqdm(keys[:num_ppl])
   for key in pbar:
     pbar.set_description("Processing %s" % key)
-    get_image(data_path, key, content[key], num_images, target_path)
+    get_image(data_path, key, content[key], num_images, target_path, offset_x, offset_y)
