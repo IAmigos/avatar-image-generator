@@ -1,6 +1,7 @@
 import os
 import requests
 from PIL import Image
+import matplotlib.pyplot as plt
 from tqdm import tqdm
 from time import time
 # import pdb
@@ -102,9 +103,9 @@ def get_image(person_name, file_w_path, num_images, target_path, offset_x,
     tqdm.write(f'({i_image} image(s) downloaded of {num_images})\n')
 
 
-def parse_vgg_data(data_path, num_people, num_images, target_path, offset_x_percent,
-                   offset_top_percent, offset_bottom_percent, min_pose=3, min_score=0,
-                   curation=False, formats_allowed=['jpg', 'jpeg']):
+def download_vgg_images(data_path, num_people, num_images, target_path, offset_x_percent,
+                        offset_top_percent, offset_bottom_percent, min_pose=3, min_score=0,
+                        curation=False, formats_allowed=['jpg', 'jpeg']):
     ''' 
         Parses info of text files in a given folder and downloads the images 
         in them. Each file contains info about images of the same person.
@@ -128,14 +129,36 @@ def parse_vgg_data(data_path, num_people, num_images, target_path, offset_x_perc
                   formats_allowed)
 
     end = time()
-    print(f'Downloading time: {round((end-ini)/60, 2)} min')
+    print(f'Downloading time: {round((end-ini)/60, 2)} min\n')
+
+
+def clean_corrupt_files(path, formats_allowed=['jpg', 'jpeg']):
+    for filename in os.listdir(path):
+        filename_lower = filename.lower()
+        if filename_lower.split('.')[-1] in formats_allowed:
+            try:
+                img = Image.open(os.path.join(path,
+                                              filename))  # open the image file
+                img.verify()  # verify that it is, in fact an image
+                if len(plt.imread(path + filename).shape) != 3:
+                    os.remove(os.path.join(path, filename))
+                    # print out the names of corrupt files
+                    print('Removing corrupt files:', filename)
+            except:
+                os.remove(os.path.join(path, filename))
+                # print out the names of corrupt files
+                print('Removing corrupt files:', filename)
+        else:
+            os.remove(os.path.join(path, filename))
+            print('Removing file with different format:', filename)
 
 
 if __name__ == "__main__":
 
     data_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\vgg_face_dataset\files'
     target_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\prueba/'
-    parse_vgg_data(data_path, num_people=50, num_images=3, target_path=target_path,
-                   offset_x_percent=15, offset_top_percent=55,
-                   offset_bottom_percent=12, min_pose=3, min_score=0,
-                   curation=False, formats_allowed=['jpg', 'jpeg'])
+    download_vgg_images(data_path, num_people=50, num_images=3, target_path=target_path,
+                        offset_x_percent=15, offset_top_percent=55,
+                        offset_bottom_percent=12, min_pose=3, min_score=0,
+                        curation=False, formats_allowed=['jpg', 'jpeg'])
+    clean_corrupt_files(target_path, formats_allowed=['jpg', 'jpeg'])
