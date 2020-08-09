@@ -2,6 +2,7 @@ import os
 import requests
 from PIL import Image
 import matplotlib.pyplot as plt
+from tqdm.notebook import tqdm as tqdm_n
 from tqdm import tqdm
 from time import time
 # import pdb
@@ -105,7 +106,7 @@ def get_image(person_name, file_w_path, num_images, target_path, offset_x,
 
 def download_vgg_images(data_path, num_people, num_images, target_path, offset_x_percent,
                         offset_top_percent, offset_bottom_percent, min_pose=3, min_score=0,
-                        curation=False, formats_allowed=['jpg', 'jpeg']):
+                        curation=False, formats_allowed=['jpg', 'jpeg'], from_notebook=False):
     ''' 
         Parses info of text files in a given folder and downloads the images 
         in them. Each file contains info about images of the same person.
@@ -116,7 +117,8 @@ def download_vgg_images(data_path, num_people, num_images, target_path, offset_x
     target_path += '/'
     files = os.listdir(data_path)
     n = num_people if num_people < len(files) else len(files)
-    pbar = tqdm(files[:num_people], total=n)
+    pbar_class = tqdm_n if from_notebook else tqdm
+    pbar = pbar_class(files[:num_people], total=n)
     for fi in pbar:
         # The file's name is the name of the person
         fi_splited = fi.split('.')
@@ -160,10 +162,10 @@ def clean_corrupt_files(path, formats_allowed=['jpg', 'jpeg']):
 
 if __name__ == "__main__":
 
-    data_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\vgg_face_dataset\files'
+    data_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\PeruvianImageGenerator\datasets\face_datasets\vgg_face_dataset\files'
     target_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\prueba/'
     download_vgg_images(data_path, num_people=50, num_images=3, target_path=target_path,
                         offset_x_percent=15, offset_top_percent=55,
                         offset_bottom_percent=12, min_pose=3, min_score=0,
-                        curation=False, formats_allowed=['jpg', 'jpeg'])
+                        curation=False, formats_allowed=['jpg', 'jpeg'], from_notebook=False)
     clean_corrupt_files(target_path, formats_allowed=['jpg', 'jpeg'])
