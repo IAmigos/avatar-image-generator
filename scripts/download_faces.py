@@ -121,7 +121,7 @@ def download_vgg_images(data_path, num_people, num_images, target_path, offset_x
         # The file's name is the name of the person
         fi_splited = fi.split('.')
         person_name = '.'.join(fi_splited[:-1]) if len(fi_splited) > 1 else fi
-        pbar.set_description('Processing '+person_name)
+        pbar.set_description(f'Processing {person_name} ({num_images} image(s))')
         file_w_path = data_path + '/' + fi
         get_image(person_name, file_w_path, num_images,
                   target_path, offset_x_percent, offset_top_percent,
@@ -133,24 +133,29 @@ def download_vgg_images(data_path, num_people, num_images, target_path, offset_x
 
 
 def clean_corrupt_files(path, formats_allowed=['jpg', 'jpeg']):
+    ''' Filters files that have only one channel, can't be opened or have a format not allowed '''
+
+    n_removed = 0
     for filename in os.listdir(path):
-        filename_lower = filename.lower()
+        filename_lower = filename  # .lower()
         if filename_lower.split('.')[-1] in formats_allowed:
             try:
-                img = Image.open(os.path.join(path,
-                                              filename))  # open the image file
-                img.verify()  # verify that it is, in fact an image
+                img = Image.open(
+                    os.path.join(path, filename))  # open the image file
+                img.verify()  # verify that it is in fact an image
                 if len(plt.imread(path + filename).shape) != 3:
                     os.remove(os.path.join(path, filename))
-                    # print out the names of corrupt files
-                    print('Removing corrupt files:', filename)
-            except:
+                    print(f'Removing corrupt file:', filename)
+                    n_removed += 1
+            except Exception:
                 os.remove(os.path.join(path, filename))
-                # print out the names of corrupt files
-                print('Removing corrupt files:', filename)
+                print('Removing corrupt file:', filename)
+                n_removed += 1
         else:
             os.remove(os.path.join(path, filename))
             print('Removing file with different format:', filename)
+            n_removed += 1
+    print(f'\n{n_removed} file(s) removed')
 
 
 if __name__ == "__main__":
