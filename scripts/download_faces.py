@@ -5,33 +5,10 @@ import matplotlib.pyplot as plt
 from tqdm.notebook import tqdm as tqdm_n
 from tqdm import tqdm
 from time import time
-# import pdb
+import cv2
+from keras_segmentation.pretrained import pspnet_101_voc12
 
-
-# class NotFound(BaseException):
-#     pass
-
-
-# def clean(base_name):
-#     """ Removes txt extension from file name """
-
-#     return base_name.split('.')[0]
-
-
-# def parse_data(data_path, num_ppl, num_images, target_path, offset_x, offset_y):
-#     content = {}
-#     def dirs(f): return data_path + '/' + f
-#     files = os.listdir(data_path)
-#     paths = map(dirs, files)
-#     for path in paths:
-#         content[clean(os.path.basename(path))] = read_file(path)
-
-#     keys = [key for key in content.keys()]
-#     pbar = tqdm(keys[:num_ppl])
-#     for key in pbar:
-#         pbar.set_description("Processing %s" % key)
-#         get_image(data_path, key,
-#                   content[key], num_images, target_path, offset_x, offset_y)
+# !pip install keras-segmentation
 
 
 def read_file(path, min_pose, min_score, curation, formats_allowed):
@@ -123,7 +100,8 @@ def download_vgg_images(data_path, num_people, num_images, target_path, offset_x
         # The file's name is the name of the person
         fi_splited = fi.split('.')
         person_name = '.'.join(fi_splited[:-1]) if len(fi_splited) > 1 else fi
-        pbar.set_description(f'Processing {person_name} ({num_images} image(s))')
+        pbar.set_description(
+            f'Processing {person_name} ({num_images} image(s))')
         file_w_path = data_path + '/' + fi
         get_image(person_name, file_w_path, num_images,
                   target_path, offset_x_percent, offset_top_percent,
@@ -160,12 +138,64 @@ def clean_corrupt_files(path, formats_allowed=['jpg', 'jpeg']):
     print(f'\n{n_removed} file(s) removed')
 
 
-if __name__ == "__main__":
+def remove_background(images_path, masks_path, output_path, from_notebook=False):
+    ''' Removes background from images (paints it white) '''
 
-    data_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\PeruvianImageGenerator\datasets\face_datasets\vgg_face_dataset\files'
+    if not os.path.exists(masks_path):
+        os.makedirs(masks_path)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    # load the pretrained model trained on Pascal VOC 2012 dataset
+    model = pspnet_101_voc12()
+
+    pbar_class = tqdm_n if from_notebook else tqdm
+    pbar = pbar_class(os.listdir(images_path)[:1])
+    start = time()
+    for filename in pbar:
+        pbar.set_description(f'Processing {filename}')
+        mask_file = filename[:-4] + "_mask.png"
+        output_file = filename[:-4] + "_wo_bg.jpg"
+
+        model.predict_segmentation(
+            inp=images_path + filename,
+            out_fname=masks_path + mask_file
+        )
+
+        img_mask = cv2.imread(masks_path + mask_file)
+        img1 = cv2.imread(images_path + filename)  # READ BGR
+
+        seg_gray = cv2.cvtColor(img_mask, cv2.COLOR_BGR2GRAY)
+        _, bg_mask = cv2.threshold(
+            seg_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+
+        # convert mask to 3-channels
+        bg_mask = cv2.cvtColor(bg_mask, cv2.COLOR_GRAY2BGR)
+
+        # cv2.bitwise_or to extract the region
+        bg = cv2.bitwise_or(img1, bg_mask)
+
+        # save
+        cv2.imwrite(output_path + output_file, bg)
+    end = time()
+
+    print('Background removed')
+    print(f'Processing time: {round((end-start)/60, 2)} min\n')
+
+
+if __name__ == "__main__":
+    data_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\vgg_face_dataset\files'
     target_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\prueba/'
+
     download_vgg_images(data_path, num_people=50, num_images=3, target_path=target_path,
                         offset_x_percent=15, offset_top_percent=55,
                         offset_bottom_percent=12, min_pose=3, min_score=0,
                         curation=False, formats_allowed=['jpg', 'jpeg'], from_notebook=False)
     clean_corrupt_files(target_path, formats_allowed=['jpg', 'jpeg'])
+
+    images_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\tmp\face_images/'
+    masks_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\tmp\masks/'
+    output_path = r'C:\Users\Daniel Ibáñez\Documents\Proyectos\Avatar Project\face_images_wo_bg/'
+
+    remove_background(images_path, masks_path,
+                      output_path, from_notebook=False)
