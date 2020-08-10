@@ -150,7 +150,7 @@ def remove_background(images_path, masks_path, output_path, from_notebook=False)
     model = pspnet_101_voc12()
 
     pbar_class = tqdm_n if from_notebook else tqdm
-    pbar = pbar_class(os.listdir(images_path)[:1])
+    pbar = pbar_class(os.listdir(images_path))
     start = time()
     for filename in pbar:
         pbar.set_description(f'Processing {filename}')
