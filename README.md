@@ -1,1 +1,1 @@
-# PeruvianImageGenerator
+# Avatar Image Generator
