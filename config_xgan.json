@@ -1,0 +1,30 @@
+{
+  "train_dataset_params": {
+    "dataset_path_faces": "face_datasets/",
+    "dataset_path_cartoons": "cartoon_datasets/",
+    "loader_params": {
+      "batch_size": 32,
+      "shuffle": true,
+      "num_workers": 4,
+      "image_size": 64
+    },
+    "save_weights": true,
+    "save_frecuency_epochs": 10,
+    "save_path": "weights/stev/"
+  },
+  "model_params": {
+    "is_train": true,
+    "num_epochs": 300,
+    "lr_opXgan": 1e-4,
+    "lr_opDisc": 1e-3,
+    "b1_disc": 0.5,
+    "lr_opCdann": 1e-3,
+    "b1_cdann": 0.99,
+    "lr_denoiser": 1e-3,
+    "wRec": 1.0,
+    "wClas": 1.0,
+    "wSem": 0.5,
+    "wGen": 0.7,
+    "use_gpu": true
+  }
+}
