@@ -1,10 +1,11 @@
+# wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911
+
 import argparse
 from utils import parse_configuration
 
 import math
 import numpy as np
 import random
-import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import pathlib
@@ -24,9 +25,18 @@ import cv2
 import time
 from tqdm import tqdm
 import helper
+import wandb
 
 
 def train(config_file, export=True):
+    # WANDB configuration
+    wandb.init(project="avatar_image_generator")
+    wandb.watch_called = False
+    config = wandb.config
+    config.seed = 0
+    torch.manual_seed(config.seed)
+    np.random.seed(config.seed)
+
     print('Reading config file...')
     configuration = parse_configuration(config_file)
 
@@ -34,14 +44,14 @@ def train(config_file, export=True):
 
     path_faces = configuration['train_dataset_params']['loader_params']['dataset_path_faces']
     path_cartoons = configuration['train_dataset_params']['loader_params']['dataset_path_cartoons']
-    image_size = configuration['train_dataset_params']['loader_params']['image_size']
-    batch_size = configuration['train_dataset_params']['loader_params']['batch_size']
-    workers = configuration['train_dataset_params']['loader_params']['num_workers']
+    config.image_size = configuration['train_dataset_params']['loader_params']['image_size']
+    config.batch_size = configuration['train_dataset_params']['loader_params']['batch_size']
+    config.workers = configuration['train_dataset_params']['loader_params']['num_workers']
 
     # Faces dataset
 
     transformFaces = T.Compose([
-        T.Resize((image_size, image_size)),
+        T.Resize((config.image_size, config.image_size)),
         T.ToTensor()
     ])
 
@@ -53,19 +63,19 @@ def train(config_file, export=True):
 
     train_loader_faces = torch.utils.data.DataLoader(
         train_dataset_faces,
-        batch_size=batch_size,
+        batch_size=config.batch_size,
         shuffle=True,
-        num_workers=workers)
+        num_workers=config.workers)
 
     test_loader_faces = torch.utils.data.DataLoader(
         test_dataset_faces,
-        batch_size=batch_size,
+        batch_size=config.batch_size,
         shuffle=True,
-        num_workers=workers)
+        num_workers=config.workers)
 
     transformCartoons = T.Compose([
         T.CenterCrop(300),
-        T.Resize((image_size, image_size)),
+        T.Resize((config.image_size, config.image_size)),
         T.ToTensor(),
         # T.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))
     ])
@@ -80,20 +90,20 @@ def train(config_file, export=True):
 
     train_loader_cartoons = torch.utils.data.DataLoader(
         train_dataset_cartoons,
-        batch_size=batch_size,
+        batch_size=config.batch_size,
         shuffle=True,
-        num_workers=workers)
+        num_workers=config.workers)
 
     test_loader_cartoons = torch.utils.data.DataLoader(
         test_dataset_cartoons,
-        batch_size=batch_size,
+        batch_size=config.batch_size,
         shuffle=True,
-        num_workers=workers)
+        num_workers=config.workers)
 
     # Hyperparameters
 
     num_epochs = configuration['model_params']['num_epochs']
-    use_gpu = configuration['model_params']['use_gpu']
+    config.use_gpu = configuration['model_params']['use_gpu']
     lr_opXgan = configuration['model_params']['lr_opXgan']
     lr_opDisc = configuration['model_params']['lr_opDisc']
     b1_disc = configuration['model_params']['b1_disc']
@@ -104,3 +114,26 @@ def train(config_file, export=True):
     wClas = configuration['model_params']['wClas']
     wSem = configuration['model_params']['wSem']
     wGen = configuration['model_params']['wGen']
+
+
+def save_weights(path, n):
+
+    torch.save(e1.state_dict(), os.path.join(path, 'e1.pth'))
+    torch.save(e2.state_dict(), os.path.join(path, 'e2.pth'))
+    torch.save(e_shared.state_dict(), os.path.join(path, 'e_shared.pth'))
+    torch.save(d_shared.state_dict(), os.path.join(path, 'd_shared.pth'))
+    torch.save(d1.state_dict(), os.path.join(path, 'd1.pth'))
+    torch.save(d2.state_dict(), os.path.join(path, 'd2.pth'))
+    torch.save(c_dann.state_dict(), os.path.join(path, 'c_dann.pth'))
+    torch.save(discriminator1.state_dict(), os.path.join(path, 'disc1.pth'))
+    torch.save(denoiser.state_dict(), os.path.join(path, 'denoiser.pth'))
+
+    wandb.save(os.path.join(path, 'e1.pth'))
+    wandb.save(os.path.join(path, 'e2.pth'))
+    wandb.save(os.path.join(path, 'e_shared.pth'))
+    wandb.save(os.path.join(path, 'd_shared.pth'))
+    wandb.save(os.path.join(path, 'd1.pth'))
+    wandb.save(os.path.join(path, 'd2.pth'))
+    wandb.save(os.path.join(path, 'c_dann.pth'))
+    wandb.save(os.path.join(path, 'disc1.pth'))
+    wandb.save(os.path.join(path, 'denoiser.pth'))
