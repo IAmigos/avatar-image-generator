@@ -1,0 +1,9 @@
+numpy==1.18.5
+torch==1.6.0+cu101
+torchvision==0.7.0+cu101
+tqdm==4.41.1
+matplotlib==3.2.2
+tqdm==4.43.0
+keras_segmentation==0.3.0
+Pillow==7.0.0
+wandb==0.10.4
