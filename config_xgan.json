@@ -1,8 +1,8 @@
 {
 	"train_dataset_params": {
     "root_path": "/content/avatar-image-generator/",
-		"dataset_path_faces": "/avatar-image-generator/datasets/face_datasets/face_images_wo_bg_permissive/",
-		"dataset_path_cartoons": "/avatar-image-generator/datasets/cartoon_datasets/cartoonset10k/",
+		"dataset_path_faces": "datasets/face_datasets/face_images_wo_bg_permissive/",
+		"dataset_path_cartoons": "datasets/cartoon_datasets/cartoonset10k/",
 		"loader_params": {
 			"batch_size": 32,
 			"image_size": 64,
