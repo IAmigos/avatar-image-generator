@@ -1,30 +1,33 @@
 {
   "train_dataset_params": {
-    "dataset_path_faces": "face_datasets/",
-    "dataset_path_cartoons": "cartoon_datasets/",
+    "dataset_path_faces": "/datasets/face_datasets/face_images_wo_bg_permissive/",
+    "dataset_path_cartoons": "/datasets/cartoon_datasets/cartoonset10k/",
     "loader_params": {
       "batch_size": 32,
-      "shuffle": true,
-      "num_workers": 4,
-      "image_size": 64
+      "image_size": 64,
+      "shuffle": True,
+      "workers": 4,
+      "seed":0
     },
-    "save_weights": true,
-    "save_frecuency_epochs": 10,
-    "save_path": "weights/stev/"
+    "save_weights": True,
+    "num_backups": 5,
+    "save_path": "weights/"
   },
-  "model_params": {
-    "is_train": true,
-    "num_epochs": 300,
-    "lr_opXgan": 1e-4,
-    "lr_opDisc": 1e-3,
+  "model_hparams": {
+    "dropout_rate_eshared": 0.5,
+    "dropout_rate_cdann": 0.5,
+    "is_train": True,
+    "num_epochs": 700,
+    "learning_rate_opTotal": 1e-4,
+    "learning_rate_opDisc": 1e-3,
     "b1_disc": 0.5,
-    "lr_opCdann": 1e-3,
+    "learning_rate_opCdann": 1e-3,
     "b1_cdann": 0.99,
-    "lr_denoiser": 1e-3,
-    "wRec": 1.0,
-    "wClas": 1.0,
-    "wSem": 0.5,
-    "wGen": 0.7,
-    "use_gpu": true
+    "learning_rate_denoiser": 1e-3,
+    "wRec_loss": 1.0,
+    "wClas_loss": 1.0,
+    "wSem_loss": 0.5,
+    "wGen_loss": 0.7,
+    "use_gpu": True
   }
 }
