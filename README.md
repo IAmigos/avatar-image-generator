@@ -90,9 +90,9 @@ This is an image-to-image translation problem, which involves many classic compu
 
 ## The model
 
-   It is based on the XGAN paper, omitting the Teacher Loss, and adding an autoencoder in the end, trained to learn well only the representation of the cartoons, as to "denoise" the spots and wrong colorisation from the face-to-cartoon outputs of the XGAN.
+   It is based on the XGAN paper omitting the Teacher Loss and adding an autoencoder in the end. The latter was trained to learn well only the representation of the cartoons as to "denoise" the spots and wrong colorisation from the face-to-cartoon outputs of the XGAN.
 
-   The model was trained using hyperparameters that are in config.json. A framework that helped us to find the better hyperparameters was Weights & Biases:
+   The model was trained using the hyperparameters located in config.json. Weights & Biases was used to find the best hyperparameters:
 
   ```
   wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911
@@ -103,4 +103,4 @@ This is an image-to-image translation problem, which involves many classic compu
 
   ```
 
-  You can see the reporte here: https://wandb.ai/stevramos/avatar_image_generator
+  You can see the Weights & Biases report here: https://wandb.ai/stevramos/avatar_image_generator
