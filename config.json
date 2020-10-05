@@ -1,0 +1,37 @@
+{
+	"train_dataset_params": {
+    "root_path": "/content/avatar-image-generator/",
+		"dataset_path_faces": "datasets/face_datasets/face_images_wo_bg_permissive/",
+		"dataset_path_cartoons": "datasets/cartoon_datasets/cartoonset10k/",
+    "dataset_path_test_faces":"datasets/faces_pucp/input_images/",
+    "dataset_path_segmented_faces" : "datasets/faces_pucp/segmented_faces/",
+    "dataset_path_output_faces" : "datasets/faces_pucp/generated_cartoon_images/",
+		"loader_params": {
+			"batch_size": 32,
+			"image_size": 64,
+			"shuffle": true,
+			"workers": 4,
+			"seed": 0
+		},
+		"save_weights": true,
+		"num_backups": 5,
+		"save_path": "weights/"
+	},
+	"model_hparams": {
+		"dropout_rate_eshared": 0.5,
+		"dropout_rate_cdann": 0.5,
+		"is_train": true,
+		"num_epochs": 700,
+		"learning_rate_opTotal": 1e-4,
+		"learning_rate_opDisc": 1e-3,
+		"b1_disc": 0.5,
+		"learning_rate_opCdann": 1e-3,
+		"b1_cdann": 0.99,
+		"learning_rate_denoiser": 1e-3,
+		"wRec_loss": 1.0,
+		"wClas_loss": 1.0,
+		"wSem_loss": 0.5,
+		"wGen_loss": 0.7,
+		"use_gpu": true
+	}
+}

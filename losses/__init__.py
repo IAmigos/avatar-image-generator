@@ -1,3 +1,5 @@
+import torch
+
 def Lrec(image_rec, image_orig):
 
     image_rec_r = image_rec.view(-1,64*64*3)

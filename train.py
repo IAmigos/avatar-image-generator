@@ -1,139 +1,255 @@
 # wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911
 
 import argparse
-from utils import parse_configuration
+from utils import *
+from losses import *
 
+import wandb
 import math
 import numpy as np
-import random
 import matplotlib.pyplot as plt
-import os
-import pathlib
+%matplotlib inline
+import os, sys
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+import torchvision.transforms as transforms
 import torchvision
-import torchvision.transforms as T
-import torchvision.datasets as D
-from torch.utils.data import DataLoader
 from torch.autograd import Variable
+from torch.utils.data import DataLoader
 
+from tqdm.notebook import tqdm
 from PIL import Image
+
+import logging
+
+from keras_segmentation.pretrained import pspnet_50_ADE_20K , pspnet_101_cityscapes, pspnet_101_voc12
 import cv2
-
-import time
-from tqdm import tqdm
 import helper
-import wandb
+import json
+
+torch.manual_seed(0)
+np.random.seed(0)
 
 
-def train(config_file, export=True):
-    # WANDB configuration
-    wandb.init(project="avatar_image_generator")
-    wandb.watch_called = False
-    config = wandb.config
-    config.seed = 0
-    torch.manual_seed(config.seed)
-    np.random.seed(config.seed)
+def train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser):
 
-    print('Reading config file...')
-    configuration = parse_configuration(config_file)
+  e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
+  optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann = optimizers
 
-    print('Initializing dataset...')
+  e1.train()
+  e2.train()
+  e_shared.train()
+  d_shared.train()
+  d1.train()
+  d2.train()
+  c_dann.train()
+  discriminator1.train()
+  denoiser.train()
 
-    path_faces = configuration['train_dataset_params']['loader_params']['dataset_path_faces']
-    path_cartoons = configuration['train_dataset_params']['loader_params']['dataset_path_cartoons']
-    config.image_size = configuration['train_dataset_params']['loader_params']['image_size']
-    config.batch_size = configuration['train_dataset_params']['loader_params']['batch_size']
-    config.workers = configuration['train_dataset_params']['loader_params']['num_workers']
+  for faces_batch, cartoons_batch in zip(train_loader_faces, train_loader_cartoons):
 
-    # Faces dataset
+    faces_batch,_ = faces_batch
+    faces_batch = Variable(faces_batch.type(torch.Tensor))
+    class_faces = Variable(torch.ones(faces_batch.size(0)))
+    faces_batch = faces_batch.to(device)
+    class_faces = class_faces.to(device)
 
-    transformFaces = T.Compose([
-        T.Resize((config.image_size, config.image_size)),
-        T.ToTensor()
-    ])
+    cartoons_batch,_ = cartoons_batch
+    cartoons_batch = Variable(cartoons_batch.type(torch.Tensor))
+    class_cartoons = Variable(torch.zeros(cartoons_batch.size(0)))
+    cartoons_batch = cartoons_batch.to(device)
+    class_cartoons = class_cartoons.to(device)
 
-    dataset_faces = torchvision.datasets.ImageFolder(
-        path_faces, transform=transformFaces)
+    e1.zero_grad()
+    e2.zero_grad()
+    e_shared.zero_grad()
+    d_shared.zero_grad()
+    d1.zero_grad()
+    d2.zero_grad()
+    c_dann.zero_grad()
+    discriminator1.zero_grad()
+    denoiser.zero_grad()
 
-    train_dataset_faces, test_dataset_faces = torch.utils.data.random_split(
-        dataset_faces, (int(len(dataset_faces)*0.9), len(dataset_faces) - int(len(dataset_faces)*0.9)))
+    #architecture
+    faces_enc1 = e1(faces_batch)
+    faces_encoder = e_shared(faces_enc1)
+    faces_decoder = d_shared(faces_encoder)
+    faces_rec = d1(faces_decoder)
+    cartoons_construct = d2(faces_decoder)
+    cartoons_construct_enc2 = e2(cartoons_construct)
+    cartoons_construct_encoder = e_shared(cartoons_construct_enc2)
 
-    train_loader_faces = torch.utils.data.DataLoader(
-        train_dataset_faces,
-        batch_size=config.batch_size,
-        shuffle=True,
-        num_workers=config.workers)
-
-    test_loader_faces = torch.utils.data.DataLoader(
-        test_dataset_faces,
-        batch_size=config.batch_size,
-        shuffle=True,
-        num_workers=config.workers)
-
-    transformCartoons = T.Compose([
-        T.CenterCrop(300),
-        T.Resize((config.image_size, config.image_size)),
-        T.ToTensor(),
-        # T.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))
-    ])
-
-    # Cartoons dataset
-
-    dataset_cartoons = torchvision.datasets.ImageFolder(
-        path_cartoons, transform=transformCartoons)
-
-    train_dataset_cartoons, test_dataset_cartoons = torch.utils.data.random_split(dataset_cartoons, (int(
-        len(dataset_cartoons)*0.9), len(dataset_cartoons) - int(len(dataset_cartoons)*0.9)))
-
-    train_loader_cartoons = torch.utils.data.DataLoader(
-        train_dataset_cartoons,
-        batch_size=config.batch_size,
-        shuffle=True,
-        num_workers=config.workers)
-
-    test_loader_cartoons = torch.utils.data.DataLoader(
-        test_dataset_cartoons,
-        batch_size=config.batch_size,
-        shuffle=True,
-        num_workers=config.workers)
-
-    # Hyperparameters
-
-    num_epochs = configuration['model_params']['num_epochs']
-    config.use_gpu = configuration['model_params']['use_gpu']
-    lr_opXgan = configuration['model_params']['lr_opXgan']
-    lr_opDisc = configuration['model_params']['lr_opDisc']
-    b1_disc = configuration['model_params']['b1_disc']
-    lr_opCdann = configuration['model_params']['lr_opCdann']
-    b1_cdann = configuration['model_params']['b1_cdann']
-    lr_denoiser = configuration['model_params']['lr_denoiser']
-    wRec = configuration['model_params']['wRec']
-    wClas = configuration['model_params']['wClas']
-    wSem = configuration['model_params']['wSem']
-    wGen = configuration['model_params']['wGen']
+    cartoons_enc2 = e2(cartoons_batch)
+    cartoons_encoder = e_shared(cartoons_enc2)
+    cartoons_decoder = d_shared(cartoons_encoder)
+    cartoons_rec = d2(cartoons_decoder)
+    faces_construct = d1(cartoons_decoder)
+    faces_construct_enc1 = e1(faces_construct)
+    faces_construct_encoder = e_shared(faces_construct_enc1)
 
 
-def save_weights(path, n):
+    # Denoiser
+    cartoons_denoised = denoiser(cartoons_rec.detach())
 
-    torch.save(e1.state_dict(), os.path.join(path, 'e1.pth'))
-    torch.save(e2.state_dict(), os.path.join(path, 'e2.pth'))
-    torch.save(e_shared.state_dict(), os.path.join(path, 'e_shared.pth'))
-    torch.save(d_shared.state_dict(), os.path.join(path, 'd_shared.pth'))
-    torch.save(d1.state_dict(), os.path.join(path, 'd1.pth'))
-    torch.save(d2.state_dict(), os.path.join(path, 'd2.pth'))
-    torch.save(c_dann.state_dict(), os.path.join(path, 'c_dann.pth'))
-    torch.save(discriminator1.state_dict(), os.path.join(path, 'disc1.pth'))
-    torch.save(denoiser.state_dict(), os.path.join(path, 'denoiser.pth'))
+    # Train Denoiser
 
-    wandb.save(os.path.join(path, 'e1.pth'))
-    wandb.save(os.path.join(path, 'e2.pth'))
-    wandb.save(os.path.join(path, 'e_shared.pth'))
-    wandb.save(os.path.join(path, 'd_shared.pth'))
-    wandb.save(os.path.join(path, 'd1.pth'))
-    wandb.save(os.path.join(path, 'd2.pth'))
-    wandb.save(os.path.join(path, 'c_dann.pth'))
-    wandb.save(os.path.join(path, 'disc1.pth'))
-    wandb.save(os.path.join(path, 'denoiser.pth'))
+    loss_denoiser = criterionDenoiser(cartoons_batch, cartoons_denoised)
+    loss_denoiser.backward()
+    optimizerDenoiser.step()
+
+
+
+    #discriminator face(1)->cartoon(2)
+
+      #train discriminator
+    data_cartoons = torch.cat([cartoons_batch, cartoons_construct.detach()], 0)
+    label_class = torch.cat([class_cartoons, class_faces], 0)
+    output = discriminator1(data_cartoons)
+    loss_disc1 = criterion_bc(output.squeeze(), label_class)
+    loss_disc1.backward()
+    optimizerDisc1.step()
+
+    #train generator
+    data_classifier = torch.cat([faces_encoder, cartoons_encoder], 0)
+    label_classifier = torch.cat([class_faces, class_cartoons], 0)
+
+    label_output = c_dann(data_classifier)
+
+
+    loss_rec1 = Lrec(faces_batch, faces_rec)
+    loss_rec2 = Lrec(cartoons_batch, cartoons_rec)
+    loss_rec =  loss_rec1 + loss_rec2
+
+    error_classifier = criterion_bc(label_output.squeeze(),label_classifier)
+
+    loss_sem1 = Lsem(faces_encoder.detach(), cartoons_construct_encoder)
+    loss_sem2 = Lsem(cartoons_encoder.detach(), faces_construct_encoder)
+    loss_sem = loss_sem1 + loss_sem2
+
+
+    class_faces.fill_(0)
+
+    output = discriminator1(cartoons_construct)
+
+    loss_gen1 = criterion_bc(output.squeeze(), class_faces)
+
+
+
+    loss_total = loss_rec + error_classifier + config.wSem_loss*loss_sem + config.wGen_loss*loss_gen1
+    loss_total.backward()
+
+
+    optimizerTotal.step()
+    optimizerCdann.step()
+
+
+  return loss_rec1, loss_rec2, error_classifier,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser
+
+
+
+
+def model_train(config_file):
+
+  wandb.init(project="avatar_image_generator")
+  wandb.watch_called = False
+
+  config = configure_model(config_file)
+
+  device = torch.device("cuda:0" if config.use_gpu and torch.cuda.is_available() else "cpu")
+
+  if config.save_weights:
+    path_save_weights = config.root_path + config.save_path
+    try:
+        os.mkdir(path_save_weights)
+    except OSError:
+        pass
+
+  logging = init_logger(log_file='logfile.log',log_dir=path_save_weights)
+
+  train_loader_faces, test_loader_faces, train_loader_cartoons, test_loader_cartoons = get_datasets(config)
+
+  model = init_model(device, config)
+  optimizers = init_optimizers(model, config)
+
+  train_loss_rec1 = []
+  train_loss_rec2 = []
+  train_loss_cdan = []
+  train_loss_sem1 = []
+  train_loss_sem2 = []
+  train_disc1 = []
+  train_gen1 = []
+  train_loss_total = []
+  train_loss_denoiser = []
+
+  criterion_bc = nn.BCELoss()
+  criterionDenoiser = nn.L1Loss()
+
+  criterion_bc.to(device)
+  criterionDenoiser.to(device)
+
+  # dataiter = iter(test_loader_faces)
+  # images_faces_to_test = dataiter.next()
+
+  images_faces_to_test = get_test_images(config, config.root_path + config.dataset_path_test_faces, config.root_path + config.dataset_path_segmented_faces)
+
+  for epoch in tqdm(range(config.num_epochs)):
+    loss_rec1, loss_rec2, error_classifier,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser = train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser)
+    generated_images = test_image(model, device, images_faces_to_test)
+
+
+    logging.info('Train Epoch [{}/{}], Loss rec1: {:.4f}, Loss rec2: {:.4f},'
+                                      ' Loss classifier: {:.4f}, Loss semantic 1->2: {:.4f}, Loss semantic 2->1: {:.4f},'
+                                      ' Loss disc1: {:.4f}, Loss gen1: {:.4f}, Loss total: {:.4f}'
+                                      .format(epoch+1, config.num_epochs, loss_rec1.item(),
+                                              loss_rec2.item(), error_classifier.item(),
+                                              loss_sem1.item(), loss_sem2.item(),
+                                              loss_disc1.item(), loss_gen1.item(), loss_total.item()))
+
+    wandb.log({"train_epoch":epoch+1,
+               "Generated images": [wandb.Image(img) for img in generated_images],
+              "loss_rec1":loss_rec1.item(),
+              "loss_rec2":loss_rec2.item(),
+              "loss_classifier":error_classifier.item(),
+              "loss_semantic12":loss_sem1.item(),
+              "loss_semantic21":loss_sem2.item(),
+              "loss_disc1":loss_disc1.item(),
+              "loss_gen1":loss_gen1.item(),
+              "loss_total":loss_total.item()})
+
+
+    if config.save_weights and ((epoch+1)% int(config.num_epochs/config.num_backups))==0:
+      path_save_epoch = path_save_weights + 'epoch_{}'.format(epoch+1)
+      try:
+          os.mkdir(path_save_epoch)
+      except OSError:
+          pass
+      save_weights(model, path_save_weights, path_save_epoch)
+      logging.info(f'Checkpoint {epoch + 1} saved !')
+
+    train_loss_rec1.append(loss_rec1.item())
+    train_loss_rec2.append(loss_rec2.item())
+    train_loss_cdan.append(error_classifier.item())
+    train_loss_sem1.append(loss_sem1.item())
+    train_loss_sem2.append(loss_sem2.item())
+    train_disc1.append(loss_disc1.item())
+    train_gen1.append(loss_gen1.item())
+    train_loss_total.append(loss_total.item())
+    train_loss_denoiser.append(loss_denoiser.item())
+
+    print("Losses")
+    print('Epoch [{}/{}], Loss rec1: {:.4f}'.format(epoch+1, config.num_epochs, loss_rec1.item()))
+    print('Epoch [{}/{}], Loss rec2: {:.4f}'.format(epoch+1, config.num_epochs, loss_rec2.item()))
+    print('Epoch [{}/{}], Loss classifier: {:.4f}'.format(epoch+1, config.num_epochs, error_classifier.item()))
+    print('Epoch [{}/{}], Loss semantic 1->2: {:.4f}'.format(epoch+1, config.num_epochs, loss_sem1.item()))
+    print('Epoch [{}/{}], Loss semantic 2->1: {:.4f}'.format(epoch+1, config.num_epochs, loss_sem2.item()))
+    print('Epoch [{}/{}], Loss disc1: {:.4f}'.format(epoch+1, config.num_epochs, loss_disc1.item()))
+    print('Epoch [{}/{}], Loss gen1: {:.4f}'.format(epoch+1, config.num_epochs, loss_gen1.item()))
+    print('Epoch [{}/{}], Loss total: {:.4f}'.format(epoch+1, config.num_epochs, loss_total.item()))
+    print('Epoch [{}/{}], Loss denoiser: {:.4f}'.format(epoch+1, config.num_epochs, loss_denoiser.item()))
+
+
+if __name__=='__main__':
+    mode_train('config.json')

@@ -1,9 +1,28 @@
+import wandb
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+import os, sys
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# XGAN Components
+import torchvision.transforms as transforms
+import torchvision
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
 
+from tqdm.notebook import tqdm
+from PIL import Image
+
+import logging
+
+from keras_segmentation.pretrained import pspnet_50_ADE_20K , pspnet_101_cityscapes, pspnet_101_voc12
+import cv2
+import helper
+import json
 
 class Encoder(nn.Module):
   def __init__(self):
@@ -24,7 +43,7 @@ class Encoder(nn.Module):
 
 
 class Eshared(nn.Module):
-  def __init__(self, dropout_rate):
+  def __init__(self, dropout_rate=0.5):
     super(Eshared, self).__init__()
     self.conv3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1, bias=False)
     self.b3 = nn.BatchNorm2d(128)
@@ -174,3 +193,73 @@ class Denoiser(nn.Module):
 
   def forward(self,x):
     return self.decoder(self.encoder(x))
+
+
+class Avatar_Generator_Model():
+    """
+    # Methods
+    __init__(dict_model): initializer
+    dict_model: layers required to perform face-to-image generation (e1, e_shared, d_shared, d2, denoiser)
+    generate(face_image, output_path=None): reutrn cartoon generated from given face image, saves it to output path if given
+    load_weights(weights_path): loads weights from given path
+    """
+
+    def __init__(self):
+        self.e1 = Encoder()
+        self.e_shared = Eshared()
+        self.d_shared = Dshared()
+        self.d2 = Decoder()
+        self.denoiser = Denoiser()
+
+    def generate(self, face_image, output_path=None):
+
+
+        face = self.__extract_face(face_image)
+        return self.__to_cartoon(face, output_path)
+
+    def load_weights(self, weights_path='weights/'):
+        self.e1.load_state_dict(torch.load(
+            weights_path + 'e1.pth'))
+        self.e_shared.load_state_dict(
+            torch.load(weights_path + 'e_shared.pth'))
+
+        self.d_shared.load_state_dict(
+            torch.load(weights_path + 'd_shared.pth'))
+
+        self.d2.load_state_dict(torch.load(
+            weights_path + 'd2.pth' ))
+
+        self.denoiser.load_state_dict(
+            torch.load(weights_path + 'denoiser.pth'))
+
+
+    def __extract_face(self, face_image):
+        #import model
+        # segment image
+        # remove background
+        # return face
+        return face_image
+
+    def __to_cartoon(self, face, output_path):
+        self.e1.eval()
+        self.e_shared.eval()
+        self.d_shared.eval()
+        self.d2.eval()
+        self.denoiser.eval()
+
+
+        transform = transforms.Compose(
+            [transforms.Resize((64, 64)), transforms.ToTensor()])
+        face = transform(face).float()
+        X = face.unsqueeze(0)
+        with torch.no_grad():
+            output = self.e1(X)
+            output = self.e_shared(output)
+            output = self.d_shared(output)
+            output = self.d2(output)
+            output = self.denoiser(output)
+        if output_path is not None:
+            # save to path
+            # fileName.jpg part of output_path
+            torchvision.utils.save_image(tensor=output, fp=output_path)
+        return torchvision.transforms.ToPILImage()(output[0])
