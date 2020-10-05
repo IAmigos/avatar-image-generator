@@ -101,3 +101,5 @@ This is an image-to-image translation problem, which involves many classic compu
   ```
 
   You can see the Weights & Biases report here: https://wandb.ai/stevramos/avatar_image_generator
+  
+  This is the implementation of [our project](https://madewithml.com/projects/1233/generating-avatars-from-real-life-pictures/) created for the Made With ML Data Science Incubator.
