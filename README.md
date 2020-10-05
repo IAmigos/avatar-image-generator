@@ -47,9 +47,8 @@ This is an image-to-image translation problem, which involves many classic compu
 │       ├── generated_cartoon_images
 │       ├── input_images
 │       │   └── data
-│       │       ├── danielito.jpeg
+│       │       ├── daniel.jpeg
 │       │       ├── joel_.jpeg
-│       │       ├── nigga.jpeg
 │       │       └── stev.jpeg
 │       └── segmented_images
 │           └── data
@@ -61,11 +60,8 @@ This is an image-to-image translation problem, which involves many classic compu
 ├── models
 │   └── __init__.py
 ├── notebooks
-│   ├── face_segmentation.ipynb
-│   ├── xgan_baseline_david.ipynb
-│   ├── xgan_baseline_pytorch_version_2.ipynb
-│   ├── xgan_model.ipynb
-│   └── xgan_stev.ipynb
+│   ├── avatar_model_testing.ipynb
+│   └── face_segmentation.ipynb
 ├── README.md
 ├── requirements.txt
 ├── scripts
@@ -75,16 +71,16 @@ This is an image-to-image translation problem, which involves many classic compu
 ├── utils
 │   └── __init__.py
 └── weights
-    └── stev
-        └── epoch_300
-            ├── c_dann.pth
-            ├── d1.pth
-            ├── d2.pth
-            ├── disc1.pth
-            ├── d_shared.pth
-            ├── e1.pth
-            ├── e2.pth
-            └── e_shared.pth
+    ├── c_dann.pth
+    ├── d1.pth
+    ├── d2.pth
+    ├── denoiser.pth
+    ├── disc1.pth
+    ├── d_shared.pth
+    ├── e1.pth
+    ├── e2.pth
+    └── e_shared.pth
+
 ```
 
 
