@@ -3,6 +3,7 @@
     "root_path": "/content/avatar-image-generator/",
 		"dataset_path_faces": "datasets/face_datasets/face_images_wo_bg_permissive/",
 		"dataset_path_cartoons": "datasets/cartoon_datasets/cartoonset10k/",
+    "dataset_path_test_faces":"datasets/faces_pucp/",
 		"loader_params": {
 			"batch_size": 32,
 			"image_size": 64,
