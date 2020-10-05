@@ -25,6 +25,7 @@ This is an image-to-image translation problem, which involves many classic compu
   weights: contains weights that we save the last time we train the model. The hyperparameters are in config.json
 
 ```
+
 ├── config.json
 ├── datasets
 │   ├── cartoon_datasets
@@ -43,7 +44,7 @@ This is an image-to-image translation problem, which involves many classic compu
 │   │       ├── files [2622 entries exceeds filelimit, not opening dir]
 │   │       ├── licence.txt
 │   │       └── README
-│   └── faces_pucp
+│   └── test_faces
 │       ├── generated_cartoon_images
 │       ├── input_images
 │       │   └── data
