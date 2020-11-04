@@ -6,3 +6,4 @@ matplotlib==3.2.2
 keras_segmentation==0.3.0
 Pillow==7.1.0
 wandb==0.10.4
+facenet-pytorch==2.5.0

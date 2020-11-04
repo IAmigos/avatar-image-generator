@@ -21,7 +21,7 @@
 		"dropout_rate_eshared": 0.5,
 		"dropout_rate_cdann": 0.5,
 		"is_train": true,
-		"num_epochs": 700,
+		"num_epochs": 5,
 		"learning_rate_opTotal": 1e-4,
 		"learning_rate_opDisc": 1e-3,
 		"b1_disc": 0.5,
@@ -29,9 +29,10 @@
 		"b1_cdann": 0.99,
 		"learning_rate_denoiser": 1e-3,
 		"wRec_loss": 1.0,
-		"wClas_loss": 1.0,
+		"wDann_loss": 0.7,
 		"wSem_loss": 0.5,
-		"wGen_loss": 0.7,
+		"wGan_loss": 1,
+		"wTeach_loss": 0.75,
 		"use_gpu": true
 	}
 }

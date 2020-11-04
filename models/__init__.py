@@ -27,19 +27,22 @@ import json
 class Encoder(nn.Module):
   def __init__(self):
     super(Encoder, self).__init__()
-    #c=capacity
+
     self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=2, padding=1, bias=False) # out: 32 x 32 x 32
-    self.b1 = nn.BatchNorm2d(32)
+    self.b1 = nn.BatchNorm2d(32) 
     self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2, padding=1, bias=False) #out: 16 x 16 x 64
-    self.b2 = nn.BatchNorm2d(64)
+    self.b2 = nn.BatchNorm2d(64) 
+
+    nn.init.kaiming_normal_(self.conv1.weight)
+    nn.init.kaiming_normal_(self.conv2.weight)
 
   def forward(self, x):
-    x = F.relu(self.conv1(x)) #try selu
+    x = F.relu(self.conv1(x)) 
     x = self.b1(x)
     x = F.relu(self.conv2(x))
     x = self.b2(x)
 
-    return x
+    return x  
 
 
 class Eshared(nn.Module):
@@ -56,6 +59,11 @@ class Eshared(nn.Module):
     self.fc2 = nn.Linear(in_features = 1024, out_features = 1024, bias=False)
     self.bfc2 = nn.BatchNorm1d(1024)
 
+    nn.init.kaiming_normal_(self.conv3.weight)
+    nn.init.kaiming_normal_(self.conv4.weight)
+    nn.init.kaiming_normal_(self.fc1.weight)
+    nn.init.kaiming_normal_(self.fc2.weight)
+
   def forward(self,x):
     x = F.relu(self.conv3(x))
     x = self.b3(x)
@@ -64,9 +72,9 @@ class Eshared(nn.Module):
     x = self.flatten(x)
     x = F.relu(self.fc1(x))
     x = self.bfc1(x)
-    x = self.dropout2(x)
+    x = self.dropout2(x)      
     x = F.relu(self.fc2(x))
-    x = self.bfc2(x)
+    x = self.bfc2(x) 
 
     return x
 
@@ -79,6 +87,9 @@ class Dshared(nn.Module):
     self.bd1 = nn.BatchNorm2d(512)
     self.deconv2 = nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=2, stride=2, bias=False)
     self.bd2 = nn.BatchNorm2d(256)
+  
+    nn.init.kaiming_normal_(self.deconv1.weight)
+    nn.init.kaiming_normal_(self.deconv2.weight)
 
   def forward(self,x):
     x = x.view(-1,1024,1,1)
@@ -92,12 +103,16 @@ class Dshared(nn.Module):
 class Decoder(nn.Module):
   def __init__(self):
     super(Decoder, self).__init__()
-    #c = capacity
+
     self.deconv3 = nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=2, stride=2, bias=False)
     self.bd3 = nn.BatchNorm2d(128)
     self.deconv4 = nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=2, stride=2, bias=False)
     self.bd4 = nn.BatchNorm2d(64)
     self.deconv5 = nn.ConvTranspose2d(in_channels=64, out_channels=3, kernel_size=2, stride=2)
+  
+    nn.init.kaiming_normal_(self.deconv3.weight)
+    nn.init.kaiming_normal_(self.deconv4.weight)
+    nn.init.xavier_normal_(self.deconv5.weight)
 
   def forward(self,x):
     x = F.relu(self.deconv3(x))
@@ -116,7 +131,7 @@ class GradReverse(torch.autograd.Function):
 
   @staticmethod
   def backward(ctx, grad_output):
-    return grad_output.neg() * 0.5
+    return grad_output.neg()
 
 
 def grad_reverse(x):
@@ -137,6 +152,14 @@ class Cdann(nn.Module):
     self.dropout6 = nn.Dropout(dropout_rate)
     self.fc7 = nn.Linear(in_features = 16, out_features = 1)
 
+    nn.init.kaiming_normal_(self.fc1.weight)
+    nn.init.kaiming_normal_(self.fc2.weight)
+    nn.init.kaiming_normal_(self.fc3.weight)
+    nn.init.kaiming_normal_(self.fc4.weight)
+    nn.init.kaiming_normal_(self.fc5.weight)
+    nn.init.kaiming_normal_(self.fc6.weight)
+    nn.init.xavier_normal_(self.fc7.weight)
+
   def forward(self, x):
     x = grad_reverse(x)
     x = F.relu(self.fc1(x))
@@ -155,14 +178,20 @@ class Cdann(nn.Module):
 class Discriminator(nn.Module):
   def __init__(self):
     super(Discriminator, self).__init__()
-    self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=2, padding=1) # out: 32 x 32 x 32
+    self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=2, padding=1) # out: 32 x 32 x 32 
     self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2, padding=1, bias=False) # out: 32 x 32 x 32
     self.b2 = nn.BatchNorm2d(32)
     self.conv3 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=2, padding=1, bias=False) # out: 32 x 32 x 32
-    self.b3 = nn.BatchNorm2d(32)
-    self.conv4 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=2, padding=1) # out: 32 x 32 x 32
+    self.b3 = nn.BatchNorm2d(32)  
+    self.conv4 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=2, padding=1) # out: 32 x 32 x 32 
     self.flatten = nn.Flatten()
     self.fc1 = nn.Linear(in_features = 4*4*32, out_features = 1)
+
+    nn.init.kaiming_normal_(self.conv1.weight)
+    nn.init.kaiming_normal_(self.conv2.weight)
+    nn.init.kaiming_normal_(self.conv3.weight)
+    nn.init.kaiming_normal_(self.conv4.weight)
+    nn.init.xavier_normal_(self.fc1.weight)
 
   def forward(self, x):
     x = F.leaky_relu(self.conv1(x), 0.2)
@@ -179,18 +208,18 @@ class Discriminator(nn.Module):
 class Denoiser(nn.Module):
   def __init__(self):
     super(Denoiser, self).__init__()
-
+    
     self.encoder = nn.Sequential(
         nn.Conv2d(3, 64, kernel_size=3, padding=1),
         nn.ReLU(),
         nn.MaxPool2d(2, 2))
-
+    
     self.decoder = nn.Sequential(
         nn.Conv2d(64, 64, kernel_size=3, padding=1),
         nn.ReLU(),
         nn.Upsample(scale_factor=2),
         nn.Conv2d(64, 3, kernel_size=3, padding=1))
-
+    
   def forward(self,x):
     return self.decoder(self.encoder(x))
 

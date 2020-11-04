@@ -2,7 +2,7 @@ import wandb
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-%matplotlib inline
+#%matplotlib inline
 import os, sys
 
 import torch
@@ -24,6 +24,7 @@ import cv2
 import helper
 import json
 
+from facenet_pytorch import InceptionResnetV1
 
 def parse_configuration(config_file):
     """Loads config file if a string was passed
@@ -37,7 +38,7 @@ def parse_configuration(config_file):
 
 
 def init_logger(log_file=None, log_dir=None):
-
+  
   fmt = '%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s: %(message)s'
 
   if log_dir is None:
@@ -54,18 +55,20 @@ def init_logger(log_file=None, log_dir=None):
   logging.basicConfig(level=logging.INFO,
                       filename=log_file,
                       format=fmt)
+  
+  
+  return logging  
 
 
-  return logging
 
-
-
-def configure_model(config_file):
+def configure_model(config_file,use_wand=True):
 
   config_file = parse_configuration(config_file)
 
-  config = wandb.config                                    ##### steeeev por queeee!!, porque de esta manera todo el config se guarda en wandb!!
-
+  if use_wand:
+    config = wandb.config                                    ##### steeeev por queeee!!, porque de esta manera todo el config se guarda en wandb!!
+  else:
+    config = type("configuration", (object,), {})
 
   config.root_path = config_file["train_dataset_params"]["root_path"]
   config.dataset_path_faces = config_file["train_dataset_params"]["dataset_path_faces"]
@@ -94,23 +97,24 @@ def configure_model(config_file):
   config.b1_cdann = config_file["model_hparams"]["b1_cdann"]
   config.learning_rate_denoiser = config_file["model_hparams"]["learning_rate_denoiser"]
   config.wRec_loss = config_file["model_hparams"]["wRec_loss"]
-  config.wClas_loss = config_file["model_hparams"]["wClas_loss"]
+  config.wDann_loss = config_file["model_hparams"]["wDann_loss"]
   config.wSem_loss = config_file["model_hparams"]["wSem_loss"]
-  config.wGen_loss = config_file["model_hparams"]["wGen_loss"]
+  config.wGan_loss = config_file["model_hparams"]["wGan_loss"]
+  config.wTeach_loss = config_file["model_hparams"]["wTeach_loss"]
   config.use_gpu = config_file["model_hparams"]["use_gpu"]
 
   return config
 
 
 def weights_init(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
-        #print('Applied to:: ', m.__class__.__name__)
-        #nn.init.normal_(m.weight.data, 0.0, 0.02)
-        nn.init.kaiming_uniform_(m.weight.data )
-    elif classname.find('BatchNorm') != -1:
-        nn.init.normal_(m.weight.data, 1.0, 0.02)
-        nn.init.constant_(m.bias.data, 0)
+  classname = m.__class__.__name__
+  if classname.find('Conv') != -1:
+    #print('Applied to:: ', m.__class__.__name__)
+    #nn.init.normal_(m.weight.data, 0.0, 0.02)
+    nn.init.kaiming_uniform_(m.weight.data )
+  elif classname.find('BatchNorm') != -1:
+    nn.init.normal_(m.weight.data, 1.0, 0.02)
+    nn.init.constant_(m.bias.data, 0)
 
 
 def save_weights(model, path_gen, path_sub):
@@ -206,7 +210,7 @@ def remove_background_image(model, path_filename, output_path):
     bg_mask = cv2.cvtColor(bg_mask, cv2.COLOR_GRAY2BGR)
 
     bg = cv2.bitwise_or(img1, bg_mask)
-
+    
     cv2.imwrite(output_path + output_file, bg)
 
 
@@ -233,9 +237,9 @@ def get_test_images(config, path_test_faces, path_segmented_faces):
   path_test_images = path_segmented_faces
 
   transform = transforms.Compose([
-
+                                
                   transforms.Resize((config.image_size,config.image_size)) ,
-                  transforms.CenterCrop(64),
+                  transforms.CenterCrop(64), 
                   transforms.ToTensor(),
                   # transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))
                   ])
@@ -245,7 +249,6 @@ def get_test_images(config, path_test_faces, path_segmented_faces):
   test_loader_images = torch.utils.data.DataLoader(
       dataset_test_images,
       batch_size=config.batch_size,
-      shuffle=True,
       num_workers = config.workers)
 
   dataiter = iter(test_loader_images)
@@ -275,7 +278,7 @@ def test_image(model, device, images_faces):
       output = d_shared(output)
       output = d2(output)
       output = denoiser(output)
-
+    
 
   # generated_images = torchvision.utils.make_grid(output.cpu()).permute(1, 2, 0)
 
@@ -296,7 +299,7 @@ def init_optimizers(model, config):
 
   optimizerDenoiser = torch.optim.Adam(denoiser.parameters(), lr=config.learning_rate_denoiser)
 
-  return (optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann)
+  return (optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann) 
 
 
 def init_model(device, config, use_wandb=True):
@@ -320,16 +323,16 @@ def init_model(device, config, use_wandb=True):
   c_dann.to(device)
   discriminator1.to(device)
   denoiser = denoiser.to(device)
-
-  e1.apply(weights_init)
-  e2.apply(weights_init)
-  e_shared.apply(weights_init)
-  d_shared.apply(weights_init)
-  d1.apply(weights_init)
-  d2.apply(weights_init)
-  c_dann.apply(weights_init)
-  discriminator1.apply(weights_init)
-  denoiser.apply(weights_init)
+  
+  # e1.apply(weights_init)
+  # e2.apply(weights_init)
+  # e_shared.apply(weights_init)
+  # d_shared.apply(weights_init)
+  # d1.apply(weights_init)
+  # d2.apply(weights_init)
+  # c_dann.apply(weights_init)
+  # discriminator1.apply(weights_init)
+  # denoiser.apply(weights_init)
 
   if use_wandb:
     wandb.watch(e1, log="all")
@@ -347,8 +350,9 @@ def init_model(device, config, use_wandb=True):
 
 
 
-def load_weights_xgan(path_load_weights, e1, e2, e_shared, d_shared, d1, d2, denoiser):
 
+def load_weights_xgan(path_load_weights, e1, e2, e_shared, d_shared, d1, d2, denoiser):
+  
   e1.load_state_dict(torch.load(path_load_weights + 'e1.pth'))
   e2.load_state_dict(torch.load(path_load_weights + 'e2.pth'))
   e_shared.load_state_dict(torch.load(path_load_weights + 'e_shared.pth'))
