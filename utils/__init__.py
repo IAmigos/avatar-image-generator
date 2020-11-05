@@ -293,7 +293,8 @@ def init_optimizers(model, config):
   optimizerDisc1 = torch.optim.Adam(listDisc1, lr=config.learning_rate_opDisc, betas=(config.b1_disc, 0.999))
 
   listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + list(d_shared.parameters()) + list(d1.parameters()) + list(d2.parameters())
-  optimizerTotal = torch.optim.RMSprop(listParameters, lr=config.learning_rate_opTotal, weight_decay=0.01)
+
+  optimizerTotal = torch.optim.Adam(listParameters, lr=config.learning_rate_opTotal)
 
   optimizerCdann = torch.optim.Adam(c_dann.parameters(), lr=config.learning_rate_opCdann, betas=(config.b1_cdann, 0.999))
 
