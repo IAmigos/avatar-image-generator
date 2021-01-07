@@ -1,8 +1,8 @@
-import wandb
+#import wandb
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-%matplotlib inline
+#%matplotlib inline
 import os, sys
 
 import torch
@@ -14,14 +14,14 @@ import torchvision
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from tqdm.notebook import tqdm
+#from tqdm.notebook import tqdm
 from PIL import Image
 
 import logging
 
-from keras_segmentation.pretrained import pspnet_50_ADE_20K , pspnet_101_cityscapes, pspnet_101_voc12
-import cv2
-import helper
+#from keras_segmentation.pretrained import pspnet_50_ADE_20K , pspnet_101_cityscapes, pspnet_101_voc12
+#import cv2
+#import helper
 import json
 
 class Encoder(nn.Module):
@@ -233,12 +233,13 @@ class Avatar_Generator_Model():
     load_weights(weights_path): loads weights from given path
     """
 
-    def __init__(self):
+    def __init__(self,weights_path):
         self.e1 = Encoder()
         self.e_shared = Eshared()
         self.d_shared = Dshared()
         self.d2 = Decoder()
         self.denoiser = Denoiser()
+        self.load_weights(weights_path)
 
     def generate(self, face_image, output_path=None):
 
@@ -246,20 +247,22 @@ class Avatar_Generator_Model():
         face = self.__extract_face(face_image)
         return self.__to_cartoon(face, output_path)
 
-    def load_weights(self, weights_path='weights/'):
+    def load_weights(self, weights_path):
+
         self.e1.load_state_dict(torch.load(
-            weights_path + 'e1.pth'))
+            weights_path + 'e1.pth',map_location=torch.device('cpu')))
+            
         self.e_shared.load_state_dict(
-            torch.load(weights_path + 'e_shared.pth'))
+            torch.load(weights_path + 'e_shared.pth',map_location=torch.device('cpu')))
 
         self.d_shared.load_state_dict(
-            torch.load(weights_path + 'd_shared.pth'))
+            torch.load(weights_path + 'd_shared.pth',map_location=torch.device('cpu')))
 
         self.d2.load_state_dict(torch.load(
-            weights_path + 'd2.pth' ))
+            weights_path + 'd2.pth',map_location=torch.device('cpu')))
 
         self.denoiser.load_state_dict(
-            torch.load(weights_path + 'denoiser.pth'))
+            torch.load(weights_path + 'denoiser.pth',map_location=torch.device('cpu')))
 
 
     def __extract_face(self, face_image):
@@ -287,8 +290,14 @@ class Avatar_Generator_Model():
             output = self.d_shared(output)
             output = self.d2(output)
             output = self.denoiser(output)
+
+        output = output[0] 
+
         if output_path is not None:
             # save to path
             # fileName.jpg part of output_path
             torchvision.utils.save_image(tensor=output, fp=output_path)
-        return torchvision.transforms.ToPILImage()(output[0])
+        
+       
+
+        return (torchvision.transforms.ToPILImage()(output), output)

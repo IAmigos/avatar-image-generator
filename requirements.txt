@@ -1,6 +1,8 @@
-tqdm==4.41.1
+Flask==1.1.1
+numpy==1.19.4
 matplotlib==3.2.2
-keras_segmentation==0.3.0
+torch==1.7.0
+torchvision==0.8.1
 Pillow==7.1.0
-wandb==0.10.4
-facenet-pytorch==2.5.0
+flask_cors
+opencv-python
