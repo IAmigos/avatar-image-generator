@@ -99,7 +99,7 @@ This is an image-to-image translation problem, which involves many classic compu
 1. Build the container locally: `sudo docker build -f Dockerfile -t avatar-image-generator .`
 2. Run the container locally: `sudo docker run -ti avatar-image-generator /bin/bash`
 3. Run the app as a daemon in docker`sudo docker run -d -p 8000:9999 -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && python app.py"`
-4. `[http://0.0.0.0:8000/](http://0.0.0.0:8000/)`
+4. Server: [http://0.0.0.0:8000/](http://0.0.0.0:8000/)
 5. `sudo docker exec -it container_id bash`
 
 ## The model
