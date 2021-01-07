@@ -22,6 +22,7 @@ This is an image-to-image translation problem, which involves many classic compu
 ## Directory structure
 
   config.json: contains the model configuration to train/test the model
+  
   weights: contains weights that we save the last time we train the model. The hyperparameters are in config.json
 
 ```
