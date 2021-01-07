@@ -26,7 +26,11 @@ This is an image-to-image translation problem, which involves many classic compu
 
 ```
 
+.
+├── app.py
+├── avatar-image-generator-app
 ├── config.json
+├── config.py
 ├── datasets
 │   ├── cartoon_datasets
 │   │   ├── cartoonset100k_limited
@@ -45,24 +49,31 @@ This is an image-to-image translation problem, which involves many classic compu
 │   │       ├── licence.txt
 │   │       └── README
 │   └── test_faces
-│       ├── generated_cartoon_images
-│       ├── input_images
-│       │   └── data
-│       │       ├── daniel.jpeg
-│       │       ├── joel_.jpeg
-│       │       └── stev.jpeg
-│       └── segmented_images
+│       └── input_images
 │           └── data
+│               ├── balotelli.jpg
+│               ├── daniel.jpeg
+│               ├── emmawatson.png
+│               ├── esterexposito.png
+│               ├── joel_.jpeg
+│               ├── mario.jpeg
+│               ├── stev.jpeg
+│               └── summertime.png
+├── Dockerfile
 ├── images
 │   ├── Cartoons_example.jpeg
 │   └── Faces_example.jpeg
+├── LICENSE
 ├── losses
 │   └── __init__.py
 ├── models
-│   └── __init__.py
+│   ├── model.py
+│   └── __pycache__
+│       └── model.cpython-38.pyc
 ├── notebooks
 │   ├── avatar_model_testing.ipynb
-│   └── face_segmentation.ipynb
+│   ├── face_segmentation.ipynb
+│   └── preprocessing_cartoon_data.ipynb
 ├── README.md
 ├── requirements.txt
 ├── scripts
@@ -81,6 +92,7 @@ This is an image-to-image translation problem, which involves many classic compu
     ├── e1.pth
     ├── e2.pth
     └── e_shared.pth
+
 
 ```
 ## Docker
