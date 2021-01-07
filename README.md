@@ -3,7 +3,7 @@
    Faces Domain <br/>
    <img src="images/Faces_example.jpeg" width="500" />
 
-   Cartoons Domain<br/>
+   Generated Cartoons <br/>
    <img src="images/Cartoons_example.jpeg" width="500" />
 
    Based on the paper XGAN: https://arxiv.org/abs/1711.05139
