@@ -24,7 +24,7 @@ import cv2
 import helper
 import json
 
-from facenet_pytorch import InceptionResnetV1
+#from facenet_pytorch import InceptionResnetV1
 
 def parse_configuration(config_file):
     """Loads config file if a string was passed
