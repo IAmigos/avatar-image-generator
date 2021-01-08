@@ -14,9 +14,10 @@ import cv2
 import base64
 import os , io , sys
 
-ALLOWED_EXTENSIONS = set(['jpg', 'jpeg'])
+ALLOWED_EXTENSIONS = set(['jpg', 'jpeg', 'png'])
 
-DOWNLOAD_DIRECTORY = "./"
+#DOWNLOAD_DIRECTORY = "./"
+DOWNLOAD_DIRECTORY = config.DOWNLOAD_DIRECTORY
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -31,12 +32,24 @@ DEVICE = config.DEVICE
 def face_to_cartoon(DOC_FILE, face):
 
     document_name = DOC_FILE.split('.')[0]
+    extension = (DOC_FILE.split('.')[-1]).lower()
     document = Image.open(io.BytesIO(face))
+
+    if not os.path.exists(DOWNLOAD_DIRECTORY):
+        os.makedirs(DOWNLOAD_DIRECTORY)
+    
+    if extension == "png":
+        format_image = "PNG"
+    else:
+        extension = "jpg"
+        format_image = "JPEG"
+
+    filename_face = "{}.{}".format(document_name, extension)
+    document.save(DOWNLOAD_DIRECTORY + filename_face, format_image, quality=80, optimize=True, progressive=True)
 
 
     filename_cartoon = "{}_cartoon.jpg".format(document_name)
- 
-    cartoon, cartoon_tensor = MODEL.generate(document, filename_cartoon)
+    cartoon, cartoon_tensor = MODEL.generate(DOWNLOAD_DIRECTORY + filename_face, DOWNLOAD_DIRECTORY + filename_cartoon)
     
     #cartoon.save(filename_cartoon, "JPEG", quality=80, optimize=True, progressive=True)
     #plt.imshow(cartoon_tensor.permute(1, 2, 0))
@@ -116,5 +129,6 @@ def predict():
 
 
 if __name__ == "__main__":
-    MODEL = Avatar_Generator_Model(config.MODEL_PATH)
+    MODEL = Avatar_Generator_Model(config.MODEL_PATH, config.DEVICE)
+
     app.run(host="0.0.0.0", port="9999")

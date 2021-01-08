@@ -6,3 +6,5 @@ torchvision==0.8.1
 Pillow==7.1.0
 flask_cors
 opencv-python
+keras-segmentation
+tensorflow==2.4.0 

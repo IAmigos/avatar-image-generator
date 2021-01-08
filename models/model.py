@@ -19,8 +19,8 @@ from PIL import Image
 
 import logging
 
-#from keras_segmentation.pretrained import pspnet_50_ADE_20K , pspnet_101_cityscapes, pspnet_101_voc12
-#import cv2
+from keras_segmentation.pretrained import pspnet_101_voc12
+import cv2
 #import helper
 import json
 
@@ -233,43 +233,63 @@ class Avatar_Generator_Model():
     load_weights(weights_path): loads weights from given path
     """
 
-    def __init__(self,weights_path):
+    def __init__(self, weights_path, device):
+        self.segmentation = pspnet_101_voc12()
         self.e1 = Encoder()
         self.e_shared = Eshared()
         self.d_shared = Dshared()
         self.d2 = Decoder()
         self.denoiser = Denoiser()
-        self.load_weights(weights_path)
+        self.load_weights(weights_path, device)
 
-    def generate(self, face_image, output_path=None):
-
-
-        face = self.__extract_face(face_image)
+    def generate(self, path_filename, output_path):
+        face = self.__extract_face(path_filename, output_path)
         return self.__to_cartoon(face, output_path)
 
-    def load_weights(self, weights_path):
+    def load_weights(self, weights_path, device):
 
         self.e1.load_state_dict(torch.load(
-            weights_path + 'e1.pth',map_location=torch.device('cpu')))
+            weights_path + 'e1.pth',map_location=torch.device(device)))
             
         self.e_shared.load_state_dict(
-            torch.load(weights_path + 'e_shared.pth',map_location=torch.device('cpu')))
+            torch.load(weights_path + 'e_shared.pth',map_location=torch.device(device)))
 
         self.d_shared.load_state_dict(
-            torch.load(weights_path + 'd_shared.pth',map_location=torch.device('cpu')))
+            torch.load(weights_path + 'd_shared.pth',map_location=torch.device(device)))
 
         self.d2.load_state_dict(torch.load(
-            weights_path + 'd2.pth',map_location=torch.device('cpu')))
+            weights_path + 'd2.pth',map_location=torch.device(device)))
 
         self.denoiser.load_state_dict(
-            torch.load(weights_path + 'denoiser.pth',map_location=torch.device('cpu')))
+            torch.load(weights_path + 'denoiser.pth',map_location=torch.device(device)))
 
 
-    def __extract_face(self, face_image):
+    def __extract_face(self, path_filename, output_path, extension=""):
         #import model
         # segment image
         # remove background
         # return face
+        
+        #output_file = path_filename.split('/')[-1].split('.')[0] + extension + ".jpg"
+
+        out = self.segmentation.predict_segmentation(
+              inp=path_filename,
+              out_fname=output_path 
+            )
+
+        img_mask = cv2.imread(output_path)
+        img1 = cv2.imread(path_filename) #READ BGR
+
+        seg_gray = cv2.cvtColor(img_mask, cv2.COLOR_BGR2GRAY)
+        _,bg_mask = cv2.threshold(seg_gray, 0, 255, cv2.THRESH_BINARY_INV|cv2.THRESH_OTSU)
+
+        bg_mask = cv2.cvtColor(bg_mask, cv2.COLOR_GRAY2BGR)
+
+        bg = cv2.bitwise_or(img1, bg_mask)
+        
+        cv2.imwrite(output_path, bg)   
+        face_image = Image.open(output_path)
+
         return face_image
 
     def __to_cartoon(self, face, output_path):
@@ -293,10 +313,10 @@ class Avatar_Generator_Model():
 
         output = output[0] 
 
-        if output_path is not None:
-            # save to path
-            # fileName.jpg part of output_path
-            torchvision.utils.save_image(tensor=output, fp=output_path)
+        #if output_path is not None:
+        # save to path
+        # fileName.jpg part of output_path
+        torchvision.utils.save_image(tensor=output, fp=output_path)
         
        
 
