@@ -166,7 +166,7 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
 
 
-def model_train(config_file, use_wandb=True, device="cpu"):
+def model_train(config_file, use_wandb=True):
 
   if use_wandb:
     wandb.init(project="avatar_image_generator")
@@ -174,10 +174,10 @@ def model_train(config_file, use_wandb=True, device="cpu"):
 
   config = configure_model(config_file,use_wandb)
 
-  #device = torch.device("cuda:0" if config.use_gpu and torch.cuda.is_available() else "cpu")
+  device = torch.device("cuda:0" if config.use_gpu and torch.cuda.is_available() else "cpu")
   #device = cf.DEVICE
-  device = torch.device(device)
-  
+  #device = torch.device(device)
+  print("Training in " + device)  
 
   if config.save_weights:
     path_save_weights = config.root_path + config.save_path
@@ -279,4 +279,4 @@ def model_train(config_file, use_wandb=True, device="cpu"):
     wandb.finish()
 
 if __name__=='__main__':
-    model_train('config.json', cf.USE_WANDB, cf.DEVICE)
+    model_train('config.json', cf.USE_WANDB)
