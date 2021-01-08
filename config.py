@@ -1,4 +1,4 @@
 MODEL_PATH = "weights/"
-DEVICE = "cpu"
+DEVICE = "cuda:0"
 DOWNLOAD_DIRECTORY = "data/"
-USE_WANDB=False
+USE_WANDB=True

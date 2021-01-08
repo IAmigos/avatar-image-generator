@@ -176,6 +176,8 @@ def model_train(config_file, use_wandb=True, device="cpu"):
 
   #device = torch.device("cuda:0" if config.use_gpu and torch.cuda.is_available() else "cpu")
   #device = cf.DEVICE
+  device = torch.device(device)
+  
 
   if config.save_weights:
     path_save_weights = config.root_path + config.save_path
