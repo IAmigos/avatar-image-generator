@@ -166,7 +166,7 @@ def train(config, model, resnet, device, train_loader_faces, train_loader_cartoo
 
 
 
-def model_train(config_file, use_wandb=True):
+def model_train(config_file, use_wandb=True, device="cpu"):
 
   if use_wandb:
     wandb.init(project="avatar_image_generator")
@@ -175,7 +175,7 @@ def model_train(config_file, use_wandb=True):
   config = configure_model(config_file,use_wandb)
 
   #device = torch.device("cuda:0" if config.use_gpu and torch.cuda.is_available() else "cpu")
-  device = cf.DEVICE
+  #device = cf.DEVICE
 
   if config.save_weights:
     path_save_weights = config.root_path + config.save_path
@@ -274,4 +274,4 @@ def model_train(config_file, use_wandb=True):
     print('Epoch [{}/{}], Loss denoiser: {:.4f}'.format(epoch+1, config.num_epochs, loss_denoiser.item()))
 
 if __name__=='__main__':
-    mode_train('config.json', cf.USE_WANDB)
+    mode_train('config.json', cf.USE_WANDB, cf.DEVICE)
