@@ -3,7 +3,7 @@ ENV PATH="/root/miniconda3/bin:${PATH}"
 ARG PATH="/root/miniconda3/bin:${PATH}"
 
 RUN apt update \
-    && apt install -y htop python3-dev wget libgl1-mesa-dev libglib2.0-0 libsm6 libxext6 libxrender-dev
+    && apt install -y python3-dev wget libgl1-mesa-dev libglib2.0-0 libsm6 libxext6 libxrender-dev
 
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
     && mkdir root/.conda \
