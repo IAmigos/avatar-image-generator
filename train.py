@@ -274,4 +274,4 @@ def model_train(config_file, use_wandb=True, device="cpu"):
     print('Epoch [{}/{}], Loss denoiser: {:.4f}'.format(epoch+1, config.num_epochs, loss_denoiser.item()))
 
 if __name__=='__main__':
-    mode_train('config.json', cf.USE_WANDB, cf.DEVICE)
+    model_train('config.json', cf.USE_WANDB, cf.DEVICE)
