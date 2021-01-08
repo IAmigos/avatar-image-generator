@@ -8,3 +8,6 @@ flask_cors
 opencv-python
 keras-segmentation
 tensorflow==2.4.0 
+wandb==0.10.12
+tqdm==4.55.1
+helper==2.4.2

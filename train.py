@@ -5,12 +5,12 @@ from utils import *
 from losses import *
 from models import *
 
-from facenet_pytorch import InceptionResnetV1
+#from facenet_pytorch import InceptionResnetV1
 import wandb
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-%matplotlib inline
+#%matplotlib inline
 import os, sys
 
 import torch
@@ -22,7 +22,7 @@ import torchvision
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 from PIL import Image
 
 import logging
@@ -31,6 +31,7 @@ from keras_segmentation.pretrained import pspnet_50_ADE_20K , pspnet_101_citysca
 import cv2
 import helper
 import json
+import config as cf
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -165,14 +166,16 @@ def train(config, model, resnet, device, train_loader_faces, train_loader_cartoo
 
 
 
-def model_train(config_file):
+def model_train(config_file, use_wandb=True):
 
-  wandb.init(project="avatar_image_generator")
-  wandb.watch_called = False
+  if use_wandb:
+    wandb.init(project="avatar_image_generator")
+    wandb.watch_called = False
 
-  config = configure_model(config_file)
+  config = configure_model(config_file,use_wandb)
 
-  device = torch.device("cuda:0" if config.use_gpu and torch.cuda.is_available() else "cpu")
+  #device = torch.device("cuda:0" if config.use_gpu and torch.cuda.is_available() else "cpu")
+  device = cf.DEVICE
 
   if config.save_weights:
     path_save_weights = config.root_path + config.save_path
@@ -181,14 +184,14 @@ def model_train(config_file):
     except OSError:
         pass
 
-  resnet = InceptionResnetV1(pretrained='vggface2').eval()
-  resnet.to(device)
+  #resnet = InceptionResnetV1(pretrained='vggface2').eval()
+  #resnet.to(device)
 
   logging = init_logger(log_file='logfile.log',log_dir=path_save_weights)
 
   train_loader_faces, test_loader_faces, train_loader_cartoons, test_loader_cartoons = get_datasets(config)
 
-  model = init_model(device, config)
+  model = init_model(device, config, use_wandb)
   optimizers = init_optimizers(model, config)
 
   train_loss_rec1 = []
@@ -208,8 +211,6 @@ def model_train(config_file):
   criterion_bc.to(device) 
   criterionDenoiser.to(device) 
 
-  # dataiter = iter(test_loader_faces)
-  # images_faces_to_test = dataiter.next()
 
   images_faces_to_test = get_test_images(config, config.root_path + config.dataset_path_test_faces, config.root_path + config.dataset_path_segmented_faces)
 
@@ -226,18 +227,18 @@ def model_train(config_file):
                                               loss_sem1.item(), loss_sem2.item(),
                                               loss_disc1.item(), loss_gen1.item(), loss_teach.item(),
                                               loss_total.item()))
-
-    wandb.log({"train_epoch":epoch+1,
-               "Generated images": [wandb.Image(img) for img in generated_images],
-              "loss_rec1":loss_rec1.item(),
-              "loss_rec2":loss_rec2.item(),
-              "loss_dann":loss_dann.item(),
-              "loss_semantic12":loss_sem1.item(),
-              "loss_semantic21":loss_sem2.item(),
-              "loss_disc1":loss_disc1.item(),
-              "loss_gen1":loss_gen1.item(),
-              "loss_teach":loss_teach.item(), 
-              "loss_total":loss_total.item()})
+    if use_wandb:
+      wandb.log({"train_epoch":epoch+1,
+                "Generated images": [wandb.Image(img) for img in generated_images],
+                "loss_rec1":loss_rec1.item(),
+                "loss_rec2":loss_rec2.item(),
+                "loss_dann":loss_dann.item(),
+                "loss_semantic12":loss_sem1.item(),
+                "loss_semantic21":loss_sem2.item(),
+                "loss_disc1":loss_disc1.item(),
+                "loss_gen1":loss_gen1.item(),
+                "loss_teach":loss_teach.item(), 
+                "loss_total":loss_total.item()})
 
 
     if config.save_weights and ((epoch+1)% int(config.num_epochs/config.num_backups))==0:
@@ -246,7 +247,7 @@ def model_train(config_file):
           os.mkdir(path_save_epoch)
       except OSError:
           pass
-      save_weights(model, path_save_weights, path_save_epoch)      
+      save_weights(model, path_save_weights, path_save_epoch, use_wandb)      
       logging.info(f'Checkpoint {epoch + 1} saved !')
 
     train_loss_rec1.append(loss_rec1.item())
@@ -273,4 +274,4 @@ def model_train(config_file):
     print('Epoch [{}/{}], Loss denoiser: {:.4f}'.format(epoch+1, config.num_epochs, loss_denoiser.item()))
 
 if __name__=='__main__':
-    mode_train('config.json')
+    mode_train('config.json', cf.USE_WANDB)

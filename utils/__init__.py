@@ -14,7 +14,7 @@ import torchvision
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 from PIL import Image
 
 import logging
@@ -61,12 +61,12 @@ def init_logger(log_file=None, log_dir=None):
 
 
 
-def configure_model(config_file,use_wand=True):
+def configure_model(config_file,use_wandb=True):
 
   config_file = parse_configuration(config_file)
 
-  if use_wand:
-    config = wandb.config                                    ##### steeeev por queeee!!, porque de esta manera todo el config se guarda en wandb!!
+  if use_wandb:
+    config = wandb.config                                    
   else:
     config = type("configuration", (object,), {})
 
@@ -109,15 +109,14 @@ def configure_model(config_file,use_wand=True):
 def weights_init(m):
   classname = m.__class__.__name__
   if classname.find('Conv') != -1:
-    #print('Applied to:: ', m.__class__.__name__)
-    #nn.init.normal_(m.weight.data, 0.0, 0.02)
     nn.init.kaiming_uniform_(m.weight.data )
+
   elif classname.find('BatchNorm') != -1:
     nn.init.normal_(m.weight.data, 1.0, 0.02)
     nn.init.constant_(m.bias.data, 0)
 
 
-def save_weights(model, path_gen, path_sub):
+def save_weights(model, path_gen, path_sub, use_wandb=True):
   e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
 
   torch.save(e1.state_dict(), os.path.join(path_sub, 'e1.pth'))
@@ -130,9 +129,8 @@ def save_weights(model, path_gen, path_sub):
   torch.save(discriminator1.state_dict(), os.path.join(path_sub, 'disc1.pth'))
   torch.save(denoiser.state_dict(), os.path.join(path_sub, 'denoiser.pth'))
 
-
-
-  wandb.save(os.path.join(path_sub,'*.pth'),base_path='/'.join(path_gen.split('/')[:-2]))
+  if use_wandb:
+    wandb.save(os.path.join(path_sub,'*.pth'),base_path='/'.join(path_gen.split('/')[:-2]))
 
 
 
@@ -240,8 +238,7 @@ def get_test_images(config, path_test_faces, path_segmented_faces):
                                 
                   transforms.Resize((config.image_size,config.image_size)) ,
                   transforms.CenterCrop(64), 
-                  transforms.ToTensor(),
-                  # transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))
+                  transforms.ToTensor(),  
                   ])
 
   dataset_test_images = torchvision.datasets.ImageFolder(path_test_images, transform=transform)
@@ -279,9 +276,6 @@ def test_image(model, device, images_faces):
       output = d2(output)
       output = denoiser(output)
     
-
-  # generated_images = torchvision.utils.make_grid(output.cpu()).permute(1, 2, 0)
-
   return output.cpu()
 
 
@@ -325,16 +319,6 @@ def init_model(device, config, use_wandb=True):
   discriminator1.to(device)
   denoiser = denoiser.to(device)
   
-  # e1.apply(weights_init)
-  # e2.apply(weights_init)
-  # e_shared.apply(weights_init)
-  # d_shared.apply(weights_init)
-  # d1.apply(weights_init)
-  # d2.apply(weights_init)
-  # c_dann.apply(weights_init)
-  # discriminator1.apply(weights_init)
-  # denoiser.apply(weights_init)
-
   if use_wandb:
     wandb.watch(e1, log="all")
     wandb.watch(e2, log="all")
