@@ -154,3 +154,5 @@ scripts/
 utils/
 config.json
 data/
+weights_trained/
+wandb/

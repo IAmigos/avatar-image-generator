@@ -14,14 +14,14 @@
 			"seed": 0
 		},
 		"save_weights": true,
-		"num_backups": 5,
-		"save_path": "weights/"
+		"num_backups": 2,
+		"save_path": "weights_trained/"
 	},
 	"model_hparams": {
 		"dropout_rate_eshared": 0.5,
 		"dropout_rate_cdann": 0.5,
 		"is_train": true,
-		"num_epochs": 5,
+		"num_epochs": 2,
 		"learning_rate_opTotal": 1e-4,
 		"learning_rate_opDisc": 1e-3,
 		"b1_disc": 0.5,

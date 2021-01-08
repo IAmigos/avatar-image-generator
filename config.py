@@ -4,4 +4,4 @@ DEVICE = "cpu"
 DOWNLOAD_DIRECTORY = "data/"
 
 #train:
-USE_WANDB=False
+USE_WANDB=True

@@ -131,4 +131,5 @@ dmypy.json
 #jpg - data
 data/
 *.jpg
-
+weights_trained/
+wandb/
