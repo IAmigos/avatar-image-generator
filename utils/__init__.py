@@ -23,6 +23,7 @@ from keras_segmentation.pretrained import pspnet_50_ADE_20K , pspnet_101_citysca
 import cv2
 import helper
 import json
+from models import *
 
 #from facenet_pytorch import InceptionResnetV1
 
