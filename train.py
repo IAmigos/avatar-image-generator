@@ -37,7 +37,7 @@ torch.manual_seed(0)
 np.random.seed(0)
 
 
-def train(config, model, resnet, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser):
+def train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser):
   
   e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
   optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann = optimizers 
@@ -217,7 +217,7 @@ def model_train(config_file, use_wandb=True, device="cpu"):
   images_faces_to_test = get_test_images(config, config.root_path + config.dataset_path_test_faces, config.root_path + config.dataset_path_segmented_faces)
 
   for epoch in tqdm(range(config.num_epochs)):
-    loss_rec1, loss_rec2, loss_dann,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach = train(config, model, resnet, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser)
+    loss_rec1, loss_rec2, loss_dann,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach = train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser)
     generated_images = test_image(model, device, images_faces_to_test)
 
 
