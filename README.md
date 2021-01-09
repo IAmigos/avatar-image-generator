@@ -109,7 +109,7 @@ This is an image-to-image translation problem, which involves many classic compu
   This is the implementation of [our project](https://madewithml.com/projects/1233/generating-avatars-from-real-life-pictures/) created for the Made With ML Data Science Incubator.
 
 
-## Training and App in Docker
+## Docker
 1. Build the container locally: `sudo docker build -f Dockerfile -t avatar-image-generator .`
 2. Run the container locally: `sudo docker run -ti avatar-image-generator /bin/bash`
 3. Train the model: 
