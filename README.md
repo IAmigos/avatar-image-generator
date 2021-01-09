@@ -96,7 +96,12 @@ This is an image-to-image translation problem, which involves many classic compu
 
 
 ```
-## Docker
+## Training
+1. Change config.json (hyperparameters) and config.py (use Weights & Biases)
+2. Run `wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911` to use wandb to get the report
+3. Run `python3 train.py`
+
+## App in Docker
 1. Build the container locally: `sudo docker build -f Dockerfile -t avatar-image-generator .`
 2. Run the container locally: `sudo docker run -ti avatar-image-generator /bin/bash`
 3. Run the app as a daemon in docker`sudo docker run -d -p 8000:9999 -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && python app.py"`
