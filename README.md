@@ -100,21 +100,22 @@ This is an image-to-image translation problem, which involves many classic compu
 
    It is based on the XGAN paper omitting the Teacher Loss and adding an autoencoder in the end. The latter was trained to learn well only the representation of the cartoons as to "denoise" the spots and wrong colorisation from the face-to-cartoon outputs of the XGAN.
 
-   The model was trained using the hyperparameters located in config.json and config.py. Weights & Biases was used to find the best hyperparameters:
+   The model was trained using the hyperparameters located in config.json. Weights & Biases was used to find the best hyperparameters:
 
-1. Change config.json (hyperparameters) and config.py (use Weights & Biases)
+1. Change config.json
 2. Run `wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911` to use wandb to get the report
-3. Run `python3 train.py`
+3. Run `python3 train.py --wandb` or `python3 train.py --no-wandb`
 
   You can see the Weights & Biases report here: https://wandb.ai/stevramos/avatar_image_generator
   
   This is the implementation of [our project](https://madewithml.com/projects/1233/generating-avatars-from-real-life-pictures/) created for the Made With ML Data Science Incubator.
 
 
-## App in Docker
+## Training and App in Docker
 1. Build the container locally: `sudo docker build -f Dockerfile -t avatar-image-generator .`
-2. Run the container locally: `sudo docker run -ti avatar-image-generator /bin/bash`
-3. Run the app as a daemon in docker`sudo docker run -d -p 8000:9999 -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && python app.py"`
-4. Server: [http://0.0.0.0:8000/](http://0.0.0.0:8000/)
-5. `sudo docker exec -it container_id bash`
+2. Train the model: `sudo docker run -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911 && python train.py --wandb"`
+3. Run the container locally: `sudo docker run -ti avatar-image-generator /bin/bash`
+4. Run the app as a daemon in docker`sudo docker run -d -p 8000:9999 -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && python app.py"`
+5. Server: [http://0.0.0.0:8000/](http://0.0.0.0:8000/)
+6. `sudo docker exec -it container_id bash`
 
