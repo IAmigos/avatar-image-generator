@@ -6,8 +6,8 @@ from flask import request
 from flask import Flask, render_template, Response, request, redirect, jsonify, send_from_directory, abort, send_file
 from flask_cors import CORS
 from models import *
+from utils import *
 import torch.nn as nn
-import config
 from PIL import Image
 import numpy as np 
 import cv2
@@ -17,7 +17,8 @@ import os , io , sys
 ALLOWED_EXTENSIONS = set(['jpg', 'jpeg', 'png'])
 
 #DOWNLOAD_DIRECTORY = "./"
-DOWNLOAD_DIRECTORY = config.DOWNLOAD_DIRECTORY
+#DOWNLOAD_DIRECTORY = config.DOWNLOAD_DIRECTORY
+DOWNLOAD_DIRECTORY = None
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -26,7 +27,7 @@ app = Flask(__name__)
 CORS(app)
 
 MODEL = None
-DEVICE = config.DEVICE
+#DEVICE = config.DEVICE
 
 
 def face_to_cartoon(DOC_FILE, face):
@@ -129,6 +130,10 @@ def predict():
 
 
 if __name__ == "__main__":
-    MODEL = Avatar_Generator_Model(config.MODEL_PATH, config.DEVICE)
+
+    config = configure_model("config.json",use_wandb=False)
+    DOWNLOAD_DIRECTORY = config.download_directory
+
+    MODEL = Avatar_Generator_Model(config.model_path, config.device)
 
     app.run(host="0.0.0.0", port="9999")

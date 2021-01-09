@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 #%matplotlib inline
 import os, sys
+import argparse
 
 import torch
 import torch.nn as nn
@@ -26,6 +27,17 @@ import json
 from models import *
 
 #from facenet_pytorch import InceptionResnetV1
+
+def parse_arguments():
+  ap = argparse.ArgumentParser()
+  ap.add_argument('-w','--wandb', default=False, action='store_true',
+   help="use weights and biases")
+  ap.add_argument('-nw  ','--no-wandb', dest='wandb', action='store_false',
+   help="not use weights and biases")
+
+  args = ap.parse_args()
+
+  return args
 
 def parse_configuration(config_file):
     """Loads config file if a string was passed
@@ -62,7 +74,7 @@ def init_logger(log_file=None, log_dir=None):
 
 
 
-def configure_model(config_file,use_wandb=True):
+def configure_model(config_file, use_wandb=False):
 
   config_file = parse_configuration(config_file)
 
@@ -70,6 +82,10 @@ def configure_model(config_file,use_wandb=True):
     config = wandb.config                                    
   else:
     config = type("configuration", (object,), {})
+
+  config.model_path = config_file["server_config"]["model_path"]
+  config.device = config_file["server_config"]["device"]
+  config.download_directory = config_file["server_config"]["download_directory"]
 
   config.root_path = config_file["train_dataset_params"]["root_path"]
   config.dataset_path_faces = config_file["train_dataset_params"]["dataset_path_faces"]

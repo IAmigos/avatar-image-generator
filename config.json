@@ -1,38 +1,43 @@
 {
-	"train_dataset_params": {
-    "root_path": "./",
-		"dataset_path_faces": "datasets/face_datasets/face_images_wo_bg_permissive/",
-		"dataset_path_cartoons": "datasets/cartoon_datasets/cartoonset10k/",
-    "dataset_path_test_faces":"datasets/test_faces/input_images/",
-    "dataset_path_segmented_faces" : "datasets/test_faces/segmented_faces/",
-    "dataset_path_output_faces" : "datasets/test_faces/generated_cartoon_images/",
-		"loader_params": {
-			"batch_size": 32,
-			"image_size": 64,
-			"shuffle": true,
-			"workers": 4,
-			"seed": 0
-		},
-		"save_weights": true,
-		"num_backups": 2,
-		"save_path": "weights_trained/"
+	"server_config":{
+	   "model_path":"weights/",
+	   "device":"cpu",
+	   "download_directory":"data/"
 	},
-	"model_hparams": {
-		"dropout_rate_eshared": 0.5,
-		"dropout_rate_cdann": 0.5,
-		"is_train": true,
-		"num_epochs": 2,
-		"learning_rate_opTotal": 1e-4,
-		"learning_rate_opDisc": 1e-3,
-		"b1_disc": 0.5,
-		"learning_rate_opCdann": 1e-3,
-		"b1_cdann": 0.99,
-		"learning_rate_denoiser": 1e-3,
-		"wRec_loss": 1.0,
-		"wDann_loss": 0.7,
-		"wSem_loss": 0.5,
-		"wGan_loss": 1,
-		"wTeach_loss": 0.75,
-		"use_gpu": true
+	"train_dataset_params":{
+	   "root_path":"./",
+	   "dataset_path_faces":"datasets/face_datasets/face_images_wo_bg_permissive/",
+	   "dataset_path_cartoons":"datasets/cartoon_datasets/cartoonset10k/",
+	   "dataset_path_test_faces":"datasets/test_faces/input_images/",
+	   "dataset_path_segmented_faces":"datasets/test_faces/segmented_faces/",
+	   "dataset_path_output_faces":"datasets/test_faces/generated_cartoon_images/",
+	   "loader_params":{
+		  "batch_size":32,
+		  "image_size":64,
+		  "shuffle":true,
+		  "workers":4,
+		  "seed":0
+	   },
+	   "save_weights":true,
+	   "num_backups":2,
+	   "save_path":"weights_trained/"
+	},
+	"model_hparams":{
+	   "dropout_rate_eshared":0.5,
+	   "dropout_rate_cdann":0.5,
+	   "is_train":true,
+	   "num_epochs":2,
+	   "learning_rate_opTotal":1e-4,
+	   "learning_rate_opDisc":1e-3,
+	   "b1_disc":0.5,
+	   "learning_rate_opCdann":1e-3,
+	   "b1_cdann":0.99,
+	   "learning_rate_denoiser":1e-3,
+	   "wRec_loss":1.0,
+	   "wDann_loss":0.7,
+	   "wSem_loss":0.5,
+	   "wGan_loss":1,
+	   "wTeach_loss":0.75,
+	   "use_gpu":true
 	}
-}
+ }

@@ -31,7 +31,6 @@ from keras_segmentation.pretrained import pspnet_50_ADE_20K , pspnet_101_citysca
 import cv2
 import helper
 import json
-import config as cf
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -168,11 +167,12 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
 def model_train(config_file, use_wandb=True):
 
+  config = configure_model(config_file, use_wandb)
+
   if use_wandb:
     wandb.init(project="avatar_image_generator")
     wandb.watch_called = False
 
-  config = configure_model(config_file,use_wandb)
 
   device = torch.device("cuda:0" if config.use_gpu and torch.cuda.is_available() else "cpu")
   #device = cf.DEVICE
@@ -282,4 +282,7 @@ def model_train(config_file, use_wandb=True):
     wandb.finish()
 
 if __name__=='__main__':
-    model_train('config.json', cf.USE_WANDB)
+  args = parse_arguments()
+  use_wandb = args.wandb
+
+  model_train('config.json', use_wandb)
