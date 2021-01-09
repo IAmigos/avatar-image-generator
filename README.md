@@ -112,9 +112,10 @@ This is an image-to-image translation problem, which involves many classic compu
 ## Training and App in Docker
 1. Build the container locally: `sudo docker build -f Dockerfile -t avatar-image-generator .`
 2. Train the model: 
-   `mkdir weights_trained` 
+
+   a. Run to create the folder: `mkdir weights_trained` 
    
-   Change the path from which mount the volume. This is for both `weights_trained` and `datasets`
+   b. Change the path from which mount the volume. This is for both `weights_trained` and `datasets`. In this case:
    
    `sudo docker run -v /home/stevramos/Documents/personal_projects/xgan/avatar-image-generator/weights_trained/:/src/weights_trained/ /home/stevramos/Documents   /personal_projects/xgan/avatar-image-generator/datasets/:/src/datasets/ -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && wandb login  17d2772d85cbda79162bd975e45fdfbf3bb18911 && python train.py --wandb"`
 
