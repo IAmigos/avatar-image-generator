@@ -146,13 +146,9 @@ Dockerfile
 #files
 __pycache__
 avatar-image-generator-app/
-datasets/
 images/
-losses/
 notebooks/
-scripts/
-utils/
-config.json
 data/
+datasets/
 weights_trained/
 wandb/
