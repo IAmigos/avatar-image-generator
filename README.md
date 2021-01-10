@@ -114,7 +114,7 @@ This is an image-to-image translation problem, which involves many classic compu
 2. Run the container locally: `sudo docker run -ti avatar-image-generator /bin/bash`
 3. Train the model: 
 
-   a. Run to create the folder: `mkdir weights_trained` 
+   a. Create the folder: `mkdir weights_trained` 
    
    b. Change the path from which mount the volume. This is for both `weights_trained` and `datasets`. In this case:
    
