@@ -147,7 +147,7 @@ def save_weights(model, path_sub, use_wandb=True):
   torch.save(denoiser.state_dict(), os.path.join(path_sub, 'denoiser.pth'))
 
   if use_wandb:
-    wandb.save(os.path.join(path_sub,'*.pth'))
+    wandb.save(os.path.join(path_sub,'*.pth'), base_path='/'.join(path_sub.split('/')[:-2]))
 
 
 
