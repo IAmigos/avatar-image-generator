@@ -16,8 +16,6 @@ import os , io , sys
 
 ALLOWED_EXTENSIONS = set(['jpg', 'jpeg', 'png'])
 
-#DOWNLOAD_DIRECTORY = "./"
-#DOWNLOAD_DIRECTORY = config.DOWNLOAD_DIRECTORY
 DOWNLOAD_DIRECTORY = None
 
 def allowed_file(filename):
@@ -27,7 +25,6 @@ app = Flask(__name__)
 CORS(app)
 
 MODEL = None
-#DEVICE = config.DEVICE
 
 
 def face_to_cartoon(DOC_FILE, face):
@@ -52,11 +49,6 @@ def face_to_cartoon(DOC_FILE, face):
     filename_cartoon = "{}_cartoon.jpg".format(document_name)
     cartoon, cartoon_tensor = MODEL.generate(DOWNLOAD_DIRECTORY + filename_face, DOWNLOAD_DIRECTORY + filename_cartoon)
     
-    #cartoon.save(filename_cartoon, "JPEG", quality=80, optimize=True, progressive=True)
-    #plt.imshow(cartoon_tensor.permute(1, 2, 0))
-    #plt.axis('off')
-    #plt.savefig(filename_cartoon)
-
     return filename_cartoon
 
 def serve_pil_image(pil_img):
@@ -69,28 +61,21 @@ def serve_pil_image(pil_img):
 @app.route('/send_image', methods=['POST'])
 def upload_file():
     # check if the post request has the file part
-    if 'files[]' not in request.files:
+    if 'face_image' not in request.files:
         resp = jsonify({'message' : 'No file part in the request'})
         resp.status_code = 400
         return resp
 	
-    files = request.files.getlist('files[]')
-	
+    file = request.files['face_image']
+
     errors = {}
     success = False
-    responsesDocs = []
-	
-    for file in files:		
-        if file and allowed_file(file.filename):
-            filename_cartoon = face_to_cartoon(file.filename, file.read())
 
-            #output = serve_pil_image(output)
-            dict_dummy = {}
-            dict_dummy['file_name'] = filename_cartoon
-            responsesDocs.append(dict_dummy)
-            success = True
-        else:
-            errors[file.filename] = 'File type is not allowed'
+    if file and allowed_file(file.filename):
+        filename_cartoon = face_to_cartoon(file.filename, file.read())
+        success = True
+    else:
+        errors[file.filename] = 'File type is not allowed'
 	
     if success and errors:
         errors['message'] = 'File(s) successfully uploaded'
@@ -98,14 +83,11 @@ def upload_file():
         resp.status_code = 500
         return resp
     if success:
-        # add service textract responce
-        resp = jsonify({'message' : 'Files successfully processed', 'responses_docs': responsesDocs})
+        resp = jsonify({'message' : 'Files successfully processed', 'filename_cartoon': filename_cartoon})
         resp.status_code = 201
         resp.headers.add('Access-Control-Allow-Origin', '*')
         print('headers:: ', resp.headers)
         return resp
-
-        #return serve_pil_image(output)
     else:
         resp = jsonify(errors)
         resp.status_code = 500
@@ -114,15 +96,8 @@ def upload_file():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    doc_name = request.form.get('cartoon_name')
+    doc_name = request.form.get('filename_cartoon')
     try:
-        #doc_name = str(doc_name)
-        #image = Image.open("/home/stevramos/Documents/personal_projects/xgan/be-app-xgan/{}".format(doc_name))
-        #img_io = io.BytesIO()
-        #image.save(img_io, 'JPEG', quality=70)
-        #img_io.seek(0)
-        
-        #return send_file(img_io, mimetype='image/jpeg')  
 
         return send_from_directory(DOWNLOAD_DIRECTORY, filename=doc_name, as_attachment=True)
     except FileNotFoundError:

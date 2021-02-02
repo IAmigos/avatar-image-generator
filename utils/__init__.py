@@ -74,7 +74,7 @@ def init_logger(log_file=None, log_dir=None):
 
 
 
-def configure_model(config_file, use_wandb=False):
+def configure_model(config_file, use_wandb):
 
   config_file = parse_configuration(config_file)
 
