@@ -252,7 +252,7 @@ def model_train(config_file, use_wandb=True):
           os.mkdir(path_save_epoch)
       except OSError:
           pass
-      save_weights(model, path_save_weights, path_save_epoch, use_wandb)      
+      save_weights(model, path_save_epoch, use_wandb)      
       logging.info(f'Checkpoint {epoch + 1} saved !')
 
     train_loss_rec1.append(loss_rec1.item())

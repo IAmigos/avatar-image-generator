@@ -133,7 +133,7 @@ def weights_init(m):
     nn.init.constant_(m.bias.data, 0)
 
 
-def save_weights(model, path_gen, path_sub, use_wandb=True):
+def save_weights(model, path_sub, use_wandb=True):
   e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
 
   torch.save(e1.state_dict(), os.path.join(path_sub, 'e1.pth'))
@@ -147,7 +147,7 @@ def save_weights(model, path_gen, path_sub, use_wandb=True):
   torch.save(denoiser.state_dict(), os.path.join(path_sub, 'denoiser.pth'))
 
   if use_wandb:
-    wandb.save(os.path.join(path_sub,'*.pth'),base_path='/'.join(path_gen.split('/')[:-2]))
+    wandb.save(os.path.join(path_sub,'*.pth'))
 
 
 
