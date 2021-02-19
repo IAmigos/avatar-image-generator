@@ -1,0 +1,3 @@
+[submodule "avatar-image-generator-app"]
+	path = avatar-image-generator-app
+	url = https://github.com/paper2code-pucp/avatar-image-generator-app.git
