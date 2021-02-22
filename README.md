@@ -13,7 +13,7 @@
 This repo aims to contribute to the daunting problem of generating a cartoon given the picture of a face.  <br/> <br/>
 This is an image-to-image translation problem, which involves many classic computer vision tasks, like style transfer, super-resolution, colorization and semnantic    segmentation. Also, this is a many-to-many mapping, which means that for a given face there are multiple valid cartoons, and for a given cartoon there are multiple valid faces too. </br>
 
-## Datasets
+## Dataset
 
   Faces dataset: we use the VggFace dataset (https://www.robots.ox.ac.uk/~vgg/data/vgg_face/) from the University of Oxford
 
