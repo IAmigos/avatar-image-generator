@@ -127,4 +127,5 @@ This is an image-to-image translation problem, which involves many classic compu
          `sudo docker run -v /home/stevramos/Documents/personal_projects/xgan/avatar-image-generator/weights_trained/:/src/weights_trained/ -v /home/stevramos/Documents/personal_projects/xgan/avatar-image-generator/datasets/:/src/datasets/ -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911 && python train.py --wandb"`
 
    * Run the app as a daemon in docker`sudo docker run -d -p 8000:9999 -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && python app.py"`
+   
       a. Server: [http://0.0.0.0:8000/](http://0.0.0.0:8000/)
