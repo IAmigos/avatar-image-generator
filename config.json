@@ -7,7 +7,7 @@
 	"train_dataset_params":{
 	   "root_path":"./",
 	   "dataset_path_faces":"datasets/face_datasets/face_images_wo_bg_permissive/",
-	   "dataset_path_cartoons":"datasets/cartoon_datasets/cartoonset10k/",
+	   "dataset_path_cartoons":"datasets/cartoon_datasets/cartoonset100k_limited/",
 	   "dataset_path_test_faces":"datasets/test_faces/input_images/",
 	   "dataset_path_segmented_faces":"datasets/test_faces/segmented_faces/",
 	   "dataset_path_output_faces":"datasets/test_faces/generated_cartoon_images/",
