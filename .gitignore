@@ -133,3 +133,6 @@ data/
 *.jpg
 weights_trained/
 wandb/
+
+#nohup
+*.out
