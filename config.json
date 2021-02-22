@@ -12,7 +12,7 @@
 	   "dataset_path_segmented_faces":"datasets/test_faces/segmented_faces/",
 	   "dataset_path_output_faces":"datasets/test_faces/generated_cartoon_images/",
 	   "loader_params":{
-		  "batch_size":64,
+		  "batch_size":32,
 		  "image_size":64,
 		  "shuffle":true,
 		  "workers":4,

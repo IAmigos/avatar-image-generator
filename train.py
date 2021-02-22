@@ -133,21 +133,24 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
     #discriminator face(1)->cartoon(2)
     discriminator1.zero_grad()
-    class_faces.fill_(0)
-      #train discriminator
-    faces_enc1 = e1(faces_batch)
-    faces_encoder = e_shared(faces_enc1)
-    faces_decoder = d_shared(faces_encoder)
-    cartoons_construct = d2(faces_decoder)  
+      #train discriminator with real cartoon images
+    output_real = discriminator1(cartoons_batch)
+    loss_disc1_real_cartoons = config.wGan_loss * criterion_bc(output_real.squeeze(), class_cartoons)
+    loss_disc1_real_cartoons.backward()
 
-    data_cartoons = torch.cat([cartoons_batch, cartoons_construct.detach()], 0)
-    label_class = torch.cat([class_cartoons, class_faces], 0)   
-    output = discriminator1(data_cartoons) 
-    loss_disc1 = config.wGan_loss*criterion_bc(output.squeeze(), label_class)
-    loss_disc1.backward()
+      #train discriminator with fake cartoon images
+    class_faces.fill_(0)
+    faces_enc1 = e1(faces_batch).detach()
+    faces_encoder = e_shared(faces_enc1).detach()
+    faces_decoder = d_shared(faces_encoder).detach()
+    cartoons_construct = d2(faces_decoder).detach()  
+    output_fake = discriminator1(cartoons_construct)
+    loss_disc1_fake_cartoons = config.wGan_loss * criterion_bc(output_fake.squeeze(), class_faces)
+    loss_disc1_fake_cartoons.backward()
+
+    loss_disc1 = loss_disc1_real_cartoons + loss_disc1_fake_cartoons
 
     optimizerDisc1.step()
-
 
     # Denoiser
     denoiser.zero_grad()
@@ -161,7 +164,7 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
     optimizerDenoiser.step()
 
 
-  return loss_rec1, loss_rec2, loss_dann,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach
+  return loss_rec1, loss_rec2, loss_dann,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach, loss_disc1_real_cartoons, loss_disc1_fake_cartoons
 
 
 
@@ -204,6 +207,8 @@ def model_train(config_file, use_wandb=True):
   train_loss_cdan = []
   train_loss_sem1 = []
   train_loss_sem2 = []
+  train_disc1_real =[]
+  train_disc1_fake =[]
   train_disc1 = []
   train_gen1 = []
   train_loss_total = []
@@ -220,18 +225,19 @@ def model_train(config_file, use_wandb=True):
   images_faces_to_test = get_test_images(config, config.root_path + config.dataset_path_test_faces, config.root_path + config.dataset_path_segmented_faces)
 
   for epoch in tqdm(range(config.num_epochs)):
-    loss_rec1, loss_rec2, loss_dann,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach = train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser)
+    loss_rec1, loss_rec2, loss_dann,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach, loss_disc1_real_cartoons, loss_disc1_fake_cartoons = train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser)
     generated_images = test_image(model, device, images_faces_to_test)
 
 
     logging.info('Train Epoch [{}/{}], Loss rec1: {:.4f}, Loss rec2: {:.4f},'
                                       ' Loss dann: {:.4f}, Loss semantic 1->2: {:.4f}, Loss semantic 2->1: {:.4f},'
                                       ' Loss disc1: {:.4f}, Loss gen1: {:.4f}, Loss teach: {:.4f}, Loss total: {:.4f}'
+                                      ' Loss disc1 real cartoons: {:.4f}, Loss disc1 fake cartoons: {:.4f}'
                                       .format(epoch+1, config.num_epochs, loss_rec1.item(),
                                               loss_rec2.item(), loss_dann.item(),
                                               loss_sem1.item(), loss_sem2.item(),
                                               loss_disc1.item(), loss_gen1.item(), loss_teach.item(),
-                                              loss_total.item()))
+                                              loss_total.item(), loss_disc1_real_cartoons.item(), loss_disc1_fake_cartoons.item()))
     if use_wandb:
       wandb.log({"train_epoch":epoch+1,
                 "Generated images": [wandb.Image(img) for img in generated_images],
@@ -240,6 +246,8 @@ def model_train(config_file, use_wandb=True):
                 "loss_dann":loss_dann.item(),
                 "loss_semantic12":loss_sem1.item(),
                 "loss_semantic21":loss_sem2.item(),
+                "loss_disc1_real_cartoons":loss_disc1_real_cartoons.item(),
+                "loss_disc1_fake_cartoons":loss_disc1_fake_cartoons.item(),
                 "loss_disc1":loss_disc1.item(),
                 "loss_gen1":loss_gen1.item(),
                 "loss_teach":loss_teach.item(), 
@@ -265,6 +273,8 @@ def model_train(config_file, use_wandb=True):
     train_loss_total.append(loss_total.item())
     train_loss_denoiser.append(loss_denoiser.item())
     train_loss_teacher.append(loss_teach.item())
+    train_disc1_real.append(loss_disc1_real_cartoons)
+    train_disc1_fake.append(loss_disc1_fake_cartoons)
 
     print("Losses")
     print('Epoch [{}/{}], Loss rec1: {:.4f}'.format(epoch+1, config.num_epochs, loss_rec1.item()))
@@ -272,6 +282,8 @@ def model_train(config_file, use_wandb=True):
     print('Epoch [{}/{}], Loss dann: {:.4f}'.format(epoch+1, config.num_epochs, loss_dann.item()))
     print('Epoch [{}/{}], Loss semantic 1->2: {:.4f}'.format(epoch+1, config.num_epochs, loss_sem1.item()))
     print('Epoch [{}/{}], Loss semantic 2->1: {:.4f}'.format(epoch+1, config.num_epochs, loss_sem2.item()))    
+    print('Epoch [{}/{}], Loss disc1 real cartoons: {:.4f}'.format(epoch+1, config.num_epochs, loss_disc1_real_cartoons.item()))
+    print('Epoch [{}/{}], Loss disc1 fake cartoons: {:.4f}'.format(epoch+1, config.num_epochs, loss_disc1_fake_cartoons.item()))
     print('Epoch [{}/{}], Loss disc1: {:.4f}'.format(epoch+1, config.num_epochs, loss_disc1.item()))
     print('Epoch [{}/{}], Loss gen1: {:.4f}'.format(epoch+1, config.num_epochs, loss_gen1.item()))
     print('Epoch [{}/{}], Loss teach: {:.4f}'.format(epoch+1, config.num_epochs, loss_teach.item()))
