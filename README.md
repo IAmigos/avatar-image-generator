@@ -32,40 +32,29 @@ This is an image-to-image translation problem, which involves many classic compu
   weights: contains weights that we saved the last time we train the model. 
 
 ```
-
-.
 ├── app.py
 ├── avatar-image-generator-app
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public
+│   └── src
+│       ├── App.js
+│       ├── App.test.js
+│       ├── components
+│       │   └── imageCropCartoon.js
+│       ├── config
+│       │   └── index.js
+│       ├── css
+│       │   ├── App.css
+│       │   └── index.css
+│       ├── images
+│       │   └── logo.svg
+│       ├── index.js
+│       ├── reportWebVitals.js
+│       ├── services
+│       │   └── cartoon-service.js
+│       └── setupTests.js
 ├── config.json
-├── config.py
-├── datasets
-│   ├── cartoon_datasets
-│   │   ├── cartoonset100k_limited
-│   │   │   └── cartoon [15987 entries exceeds filelimit, not opening dir]
-│   │   ├── cartoonset100k_limited_df.csv
-│   │   ├── cartoonset10k
-│   │   │   └── cartoon [10000 entries exceeds filelimit, not opening dir]
-│   │   └── cartoonset10k_df.csv
-│   ├── face_datasets
-│   │   ├── face_images_wo_bg
-│   │   │   └── faces [2500 entries exceeds filelimit, not opening dir]
-│   │   ├── face_images_wo_bg_permissive
-│   │   │   └── faces [2500 entries exceeds filelimit, not opening dir]
-│   │   └── vgg_face_dataset
-│   │       ├── files [2622 entries exceeds filelimit, not opening dir]
-│   │       ├── licence.txt
-│   │       └── README
-│   └── test_faces
-│       └── input_images
-│           └── data
-│               ├── balotelli.jpg
-│               ├── daniel.jpeg
-│               ├── emmawatson.png
-│               ├── esterexposito.png
-│               ├── joel_.jpeg
-│               ├── mario.jpeg
-│               ├── stev.jpeg
-│               └── summertime.png
 ├── Dockerfile
 ├── images
 │   ├── Cartoons_example.jpeg
@@ -74,12 +63,13 @@ This is an image-to-image translation problem, which involves many classic compu
 ├── losses
 │   └── __init__.py
 ├── models
-│   ├── model.py
-│   └── __pycache__
-│       └── model.cpython-38.pyc
+│   └── __init__.py
 ├── notebooks
 │   ├── avatar_model_testing.ipynb
-│   ├── face_segmentation.ipynb
+│   └── face_segmentation.ipynb
+├── preprocessing
+│   ├── copyFiles.sh
+│   ├── keepFiles.sh
 │   └── preprocessing_cartoon_data.ipynb
 ├── README.md
 ├── requirements.txt
@@ -87,6 +77,7 @@ This is an image-to-image translation problem, which involves many classic compu
 │   ├── download_faces.py
 │   └── plot_utils.py
 ├── train.py
+├── treedirectory.txt
 ├── utils
 │   └── __init__.py
 └── weights
@@ -99,6 +90,8 @@ This is an image-to-image translation problem, which involves many classic compu
     ├── e1.pth
     ├── e2.pth
     └── e_shared.pth
+
+16 directories, 51 files
 ```
 ## The model
 
