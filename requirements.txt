@@ -4,9 +4,9 @@ matplotlib==3.2.2
 torch==1.7.0
 torchvision==0.8.1
 Pillow==7.1.0
-flask_cors
-opencv-python
-keras-segmentation
+flask_cors==3.0.10
+opencv-python==4.5.1.48
+keras-segmentation==0.3.0
 tensorflow==2.4.0 
 wandb==0.10.12
 tqdm==4.55.1
