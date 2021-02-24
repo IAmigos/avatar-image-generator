@@ -305,7 +305,7 @@ def init_optimizers(model, config):
 
   listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + list(d_shared.parameters()) + list(d1.parameters()) + list(d2.parameters())
 
-  optimizerTotal = torch.optim.Adam(listParameters, lr=config.learning_rate_opTotal)
+  optimizerTotal = torch.optim.Adam(listParameters, lr=config.learning_rate_opTotal, betas=(0.5, 0.999))
 
   optimizerCdann = torch.optim.Adam(c_dann.parameters(), lr=config.learning_rate_opCdann, betas=(config.b1_cdann, 0.999))
 
