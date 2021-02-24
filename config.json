@@ -29,7 +29,6 @@
 	   "num_epochs":1500,
 	   "learning_rate_opTotal":1e-4,
 	   "learning_rate_opDisc":1e-3,
-	   "learning_rate_opCdann":1e-3,
 	   "learning_rate_denoiser":1e-3,
 	   "wRec_loss":1.0,
 	   "wDann_loss":0.7,
