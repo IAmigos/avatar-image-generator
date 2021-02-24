@@ -95,14 +95,14 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
     #train generator
 
-    loss_rec1 = criterion_l2(faces_batch, faces_rec)
-    loss_rec2 = criterion_l2(cartoons_batch, cartoons_rec)
+    loss_rec1 = L2_norm(faces_batch, faces_rec)
+    loss_rec2 = L2_norm(cartoons_batch, cartoons_rec)
     loss_rec =  loss_rec1 + loss_rec2
 
     loss_dann = criterion_bc(label_output_face.squeeze(), torch.zeros_like(label_output_face.squeeze(), device=device)) +  criterion_bc(label_output_cartoon.squeeze(), torch.ones_like(label_output_cartoon.squeeze(), device=device))
 
-    loss_sem1 = criterion_l1(faces_encoder.detach(), cartoons_construct_encoder) 
-    loss_sem2 = criterion_l1(cartoons_encoder.detach(), faces_construct_encoder) 
+    loss_sem1 = L1_norm(faces_encoder.detach(), cartoons_construct_encoder) 
+    loss_sem2 = L1_norm(cartoons_encoder.detach(), faces_construct_encoder) 
     loss_sem = loss_sem1 + loss_sem2
 
     #teach loss
@@ -156,7 +156,7 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
     # Train Denoiser
 
-    loss_denoiser = criterion_l2(cartoons_batch, cartoons_denoised)
+    loss_denoiser = L2_norm(cartoons_batch, cartoons_denoised)
     loss_denoiser.backward()
 
     optimizerDenoiser.step()
