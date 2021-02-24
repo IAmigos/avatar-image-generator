@@ -109,9 +109,6 @@ def configure_model(config_file, use_wandb):
   config.num_epochs = config_file["model_hparams"]["num_epochs"]
   config.learning_rate_opTotal = config_file["model_hparams"]["learning_rate_opTotal"]
   config.learning_rate_opDisc = config_file["model_hparams"]["learning_rate_opDisc"]
-  config.b1_disc = config_file["model_hparams"]["b1_disc"]
-  config.learning_rate_opCdann = config_file["model_hparams"]["learning_rate_opCdann"]
-  config.b1_cdann = config_file["model_hparams"]["b1_cdann"]
   config.learning_rate_denoiser = config_file["model_hparams"]["learning_rate_denoiser"]
   config.wRec_loss = config_file["model_hparams"]["wRec_loss"]
   config.wDann_loss = config_file["model_hparams"]["wDann_loss"]
@@ -301,17 +298,14 @@ def init_optimizers(model, config):
   e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
 
   listDisc1 = list(discriminator1.parameters())
-  optimizerDisc1 = torch.optim.Adam(listDisc1, lr=config.learning_rate_opDisc, betas=(config.b1_disc, 0.999))
+  optimizerDisc1 = torch.optim.Adam(listDisc1, lr=config.learning_rate_opDisc, betas=(0.5, 0.999))
 
-  listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + list(d_shared.parameters()) + list(d1.parameters()) + list(d2.parameters())
-
+  listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + list(d_shared.parameters()) + list(d1.parameters()) + list(d2.parameters()) + list(c_dann.parameters())
   optimizerTotal = torch.optim.Adam(listParameters, lr=config.learning_rate_opTotal, betas=(0.5, 0.999))
-
-  optimizerCdann = torch.optim.Adam(c_dann.parameters(), lr=config.learning_rate_opCdann, betas=(config.b1_cdann, 0.999))
 
   optimizerDenoiser = torch.optim.Adam(denoiser.parameters(), lr=config.learning_rate_denoiser)
 
-  return (optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann) 
+  return (optimizerDenoiser, optimizerDisc1, optimizerTotal) 
 
 
 def init_model(device, config, use_wandb=True):

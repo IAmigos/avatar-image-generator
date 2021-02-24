@@ -39,7 +39,7 @@ np.random.seed(0)
 def train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterion_l1, criterion_l2):
   
   e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
-  optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann = optimizers 
+  optimizerDenoiser, optimizerDisc1, optimizerTotal = optimizers 
   
   e1.train()
   e2.train()
@@ -125,7 +125,6 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
 
     optimizerTotal.step()
-    optimizerCdann.step()
 
 
 
@@ -134,7 +133,7 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
       #train discriminator with real cartoon images
     output_real = discriminator1(cartoons_batch)
     loss_disc1_real_cartoons = config.wGan_loss * criterion_bc(output_real.squeeze(), torch.ones_like(output_real.squeeze(), device=device))
-    loss_disc1_real_cartoons.backward()
+    #loss_disc1_real_cartoons.backward()
 
       #train discriminator with fake cartoon images
     #class_faces.fill_(0)
@@ -144,10 +143,10 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
     cartoons_construct = d2(faces_decoder).detach()  
     output_fake = discriminator1(cartoons_construct)
     loss_disc1_fake_cartoons = config.wGan_loss * criterion_bc(output_fake.squeeze(), torch.zeros_like(output_fake.squeeze(), device=device))
-    loss_disc1_fake_cartoons.backward()
+    #loss_disc1_fake_cartoons.backward()
 
     loss_disc1 = loss_disc1_real_cartoons + loss_disc1_fake_cartoons
-
+    loss_disc1.backward()
     optimizerDisc1.step()
 
     # Denoiser
