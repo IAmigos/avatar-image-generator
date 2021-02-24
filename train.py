@@ -55,15 +55,15 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
     faces_batch,_ = faces_batch
     faces_batch = Variable(faces_batch.type(torch.Tensor))
-    class_faces = Variable(torch.zeros(faces_batch.size(0)))
+    #class_faces = Variable(torch.zeros(faces_batch.size(0)))
     faces_batch = faces_batch.to(device)
-    class_faces = class_faces.to(device)
+    #class_faces = class_faces.to(device)
     
     cartoons_batch,_ = cartoons_batch
     cartoons_batch = Variable(cartoons_batch.type(torch.Tensor))
-    class_cartoons = Variable(torch.ones(cartoons_batch.size(0)))
+    #class_cartoons = Variable(torch.ones(cartoons_batch.size(0)))
     cartoons_batch = cartoons_batch.to(device)
-    class_cartoons = class_cartoons.to(device)
+    #class_cartoons = class_cartoons.to(device)
     
     e1.zero_grad()
     e2.zero_grad()
@@ -99,7 +99,8 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
     loss_rec2 = criterion_l2(cartoons_batch, cartoons_rec)
     loss_rec =  loss_rec1 + loss_rec2
 
-    loss_dann = criterion_bc(label_output_face.squeeze(), class_faces) +  criterion_bc(label_output_cartoon.squeeze(), class_cartoons)
+    loss_dann = criterion_bc(label_output_face.squeeze(), torch.zeros_like(label_output_face.squeeze(), device=device)) +  
+                criterion_bc(label_output_cartoon.squeeze(), torch.ones_like(label_output_cartoon.squeeze(), device=device))
 
     loss_sem1 = criterion_l1(faces_encoder.detach(), cartoons_construct_encoder) 
     loss_sem2 = criterion_l1(cartoons_encoder.detach(), faces_construct_encoder) 
@@ -112,11 +113,11 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
     loss_teach = torch.Tensor([1]).requires_grad_() 
     loss_teach = loss_teach.to(device)
 
-    class_faces.fill_(1)
+    #class_faces.fill_(1)
 
     output = discriminator1(cartoons_construct)
 
-    loss_gen1 = criterion_bc(output.squeeze(), class_faces)
+    loss_gen1 = criterion_bc(output.squeeze(), torch.ones_like(output.squeeze(), device=device))
 
 
 
@@ -133,17 +134,17 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
     discriminator1.zero_grad()
       #train discriminator with real cartoon images
     output_real = discriminator1(cartoons_batch)
-    loss_disc1_real_cartoons = config.wGan_loss * criterion_bc(output_real.squeeze(), class_cartoons)
+    loss_disc1_real_cartoons = config.wGan_loss * criterion_bc(output_real.squeeze(), torch.ones_like(output_real.squeeze(), device=device))
     loss_disc1_real_cartoons.backward()
 
       #train discriminator with fake cartoon images
-    class_faces.fill_(0)
+    #class_faces.fill_(0)
     faces_enc1 = e1(faces_batch).detach()
     faces_encoder = e_shared(faces_enc1).detach()
     faces_decoder = d_shared(faces_encoder).detach()
     cartoons_construct = d2(faces_decoder).detach()  
     output_fake = discriminator1(cartoons_construct)
-    loss_disc1_fake_cartoons = config.wGan_loss * criterion_bc(output_fake.squeeze(), class_faces)
+    loss_disc1_fake_cartoons = config.wGan_loss * criterion_bc(output_fake.squeeze(), torch.zeros_like(output_fake.squeeze(), device=device))
     loss_disc1_fake_cartoons.backward()
 
     loss_disc1 = loss_disc1_real_cartoons + loss_disc1_fake_cartoons
