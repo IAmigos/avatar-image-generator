@@ -221,7 +221,7 @@ class Denoiser(nn.Module):
         nn.Conv2d(64, 3, kernel_size=3, padding=1))
     
   def forward(self,x):
-    return self.decoder(self.encoder(x))
+    return torch.tanh(self.decoder(self.encoder(x)))
 
 
 class Avatar_Generator_Model():

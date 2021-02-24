@@ -19,6 +19,7 @@ from tqdm import tqdm
 from PIL import Image
 
 import logging
+import random
 
 from keras_segmentation.pretrained import pspnet_50_ADE_20K , pspnet_101_cityscapes, pspnet_101_voc12
 import cv2
@@ -27,6 +28,18 @@ import json
 from models import *
 
 #from facenet_pytorch import InceptionResnetV1
+def set_seed(seed):
+    """Set seed"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+    os.environ["PYTHONHASHSEED"] = str(seed)
+
 
 def parse_arguments():
   ap = argparse.ArgumentParser()
@@ -97,7 +110,6 @@ def configure_model(config_file, use_wandb):
   config.image_size = config_file["train_dataset_params"]["loader_params"]["image_size"]
   config.shuffle = config_file["train_dataset_params"]["loader_params"]["shuffle"]
   config.workers = config_file["train_dataset_params"]["loader_params"]["workers"]
-  config.seed = config_file["train_dataset_params"]["loader_params"]["seed"]
 
   config.save_weights = config_file["train_dataset_params"]["save_weights"]
   config.num_backups = config_file["train_dataset_params"]["num_backups"]
@@ -105,7 +117,6 @@ def configure_model(config_file, use_wandb):
 
   config.dropout_rate_eshared = config_file["model_hparams"]["dropout_rate_eshared"]
   config.dropout_rate_cdann = config_file["model_hparams"]["dropout_rate_cdann"]
-  config.is_train = config_file["model_hparams"]["is_train"]
   config.num_epochs = config_file["model_hparams"]["num_epochs"]
   config.learning_rate_opTotal = config_file["model_hparams"]["learning_rate_opTotal"]
   config.learning_rate_opDisc = config_file["model_hparams"]["learning_rate_opDisc"]
@@ -152,16 +163,19 @@ def get_datasets(config):
 
   path_faces = config.root_path + config.dataset_path_faces
   path_cartoons = config.root_path + config.dataset_path_cartoons
-
+  
+  stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+    
   transform_faces = transforms.Compose([
                 transforms.Resize((config.image_size,config.image_size)) ,
-                transforms.ToTensor()
-                ])
+                transforms.ToTensor(),
+                transforms.Normalize(*stats)])
 
   transform_cartoons = transforms.Compose([
                 transforms.CenterCrop(400),
                 transforms.Resize((config.image_size,config.image_size)) ,
-                transforms.ToTensor()
+                transforms.ToTensor(),
+                transforms.Normalize(*stats)
                 ])
 
   dataset_faces = torchvision.datasets.ImageFolder(path_faces, transform=transform_faces)
@@ -248,11 +262,13 @@ def get_test_images(config, path_test_faces, path_segmented_faces):
 
   path_test_images = path_segmented_faces
 
-  transform = transforms.Compose([
-                                
+  stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+    
+  transform = transforms.Compose([              
                   transforms.Resize((config.image_size,config.image_size)) ,
                   transforms.CenterCrop(64), 
-                  transforms.ToTensor(),  
+                  transforms.ToTensor(),
+                  transforms.Normalize(*stats)
                   ])
 
   dataset_test_images = torchvision.datasets.ImageFolder(path_test_images, transform=transform)
@@ -268,6 +284,11 @@ def get_test_images(config, path_test_faces, path_segmented_faces):
 
   return test_images
 
+
+def denorm(img_tensors):
+    stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+    
+    return img_tensors * stats[1][0] + stats[0][0]
 
 def test_image(model, device, images_faces):
 
@@ -289,7 +310,9 @@ def test_image(model, device, images_faces):
       output = d_shared(output)
       output = d2(output)
       output = denoiser(output)
-    
+
+  output = denorm(output)      
+
   return output.cpu()
 
 

@@ -32,8 +32,6 @@ import cv2
 import helper
 import json
 
-torch.manual_seed(0)
-np.random.seed(0)
 
 
 def train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterion_l1, criterion_l2):
@@ -58,13 +56,13 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
     #class_faces = Variable(torch.zeros(faces_batch.size(0)))
     faces_batch = faces_batch.to(device)
     #class_faces = class_faces.to(device)
-    
+
     cartoons_batch,_ = cartoons_batch
     cartoons_batch = Variable(cartoons_batch.type(torch.Tensor))
     #class_cartoons = Variable(torch.ones(cartoons_batch.size(0)))
     cartoons_batch = cartoons_batch.to(device)
     #class_cartoons = class_cartoons.to(device)
-    
+
     e1.zero_grad()
     e2.zero_grad()
     e_shared.zero_grad()
@@ -166,6 +164,7 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
 
 def model_train(config_file, use_wandb=True):
+  set_seed(32)  
 
   if use_wandb:
     wandb.init(project="avatar_image_generator")

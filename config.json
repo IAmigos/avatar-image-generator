@@ -15,18 +15,16 @@
 		  "batch_size":32,
 		  "image_size":64,
 		  "shuffle":true,
-		  "workers":4,
-		  "seed":0
+		  "workers":4
 	   },
 	   "save_weights":true,
-	   "num_backups":10,
+	   "num_backups":20,
 	   "save_path":"weights_trained/"
 	},
 	"model_hparams":{
 	   "dropout_rate_eshared":0.5,
 	   "dropout_rate_cdann":0.5,
-	   "is_train":true,
-	   "num_epochs":1500,
+	   "num_epochs":1000,
 	   "learning_rate_opTotal":1e-4,
 	   "learning_rate_opDisc":1e-3,
 	   "learning_rate_denoiser":1e-3,
