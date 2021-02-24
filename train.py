@@ -99,8 +99,7 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
     loss_rec2 = criterion_l2(cartoons_batch, cartoons_rec)
     loss_rec =  loss_rec1 + loss_rec2
 
-    loss_dann = criterion_bc(label_output_face.squeeze(), torch.zeros_like(label_output_face.squeeze(), device=device)) +  
-                criterion_bc(label_output_cartoon.squeeze(), torch.ones_like(label_output_cartoon.squeeze(), device=device))
+    loss_dann = criterion_bc(label_output_face.squeeze(), torch.zeros_like(label_output_face.squeeze(), device=device)) +  criterion_bc(label_output_cartoon.squeeze(), torch.ones_like(label_output_cartoon.squeeze(), device=device))
 
     loss_sem1 = criterion_l1(faces_encoder.detach(), cartoons_construct_encoder) 
     loss_sem2 = criterion_l1(cartoons_encoder.detach(), faces_construct_encoder) 
