@@ -36,7 +36,7 @@ torch.manual_seed(0)
 np.random.seed(0)
 
 
-def train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser):
+def train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterion_l1, criterion_l2):
   
   e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
   optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann = optimizers 
@@ -90,21 +90,19 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
     faces_construct_enc1 = e1(faces_construct)
     faces_construct_encoder = e_shared(faces_construct_enc1)
 
+    label_output_face = c_dann(faces_encoder)
+    label_output_cartoon = c_dann(cartoons_encoder)
+
     #train generator
-    data_classifier = torch.cat([faces_encoder, cartoons_encoder], 0)
-    label_classifier = torch.cat([class_faces, class_cartoons], 0)
 
-    label_output = c_dann(data_classifier) 
-
-
-    loss_rec1 = L2_norm(faces_batch, faces_rec)
-    loss_rec2 = L2_norm(cartoons_batch, cartoons_rec)
+    loss_rec1 = criterion_l2(faces_batch, faces_rec)
+    loss_rec2 = criterion_l2(cartoons_batch, cartoons_rec)
     loss_rec =  loss_rec1 + loss_rec2
 
-    loss_dann = criterion_bc(label_output.squeeze(),label_classifier) 
+    loss_dann = criterion_bc(label_output_face.squeeze(), class_faces) +  criterion_bc(label_output_cartoon.squeeze(), class_cartoons)
 
-    loss_sem1 = L1_norm(faces_encoder.detach(), cartoons_construct_encoder) 
-    loss_sem2 = L1_norm(cartoons_encoder.detach(), faces_construct_encoder) 
+    loss_sem1 = criterion_l1(faces_encoder.detach(), cartoons_construct_encoder) 
+    loss_sem2 = criterion_l1(cartoons_encoder.detach(), faces_construct_encoder) 
     loss_sem = loss_sem1 + loss_sem2
 
     #teach loss
@@ -158,7 +156,7 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
     # Train Denoiser
 
-    loss_denoiser = criterionDenoiser(cartoons_batch, cartoons_denoised)
+    loss_denoiser = criterion_l2(cartoons_batch, cartoons_denoised)
     loss_denoiser.backward()
 
     optimizerDenoiser.step()
@@ -216,16 +214,20 @@ def model_train(config_file, use_wandb=True):
   train_loss_teacher = []
 
   criterion_bc = nn.BCELoss()
-  criterionDenoiser = nn.L1Loss()
+  criterion_l1 = nn.L1Loss()
+  criterion_l2 = nn.MSELoss()
+  #criterion_l1 = L1_norm()
+  #criterion_l2 = L2_norm()
 
   criterion_bc.to(device) 
-  criterionDenoiser.to(device) 
-
+  criterion_l1.to(device)
+  criterion_l2.to(device)
+  
 
   images_faces_to_test = get_test_images(config, config.root_path + config.dataset_path_test_faces, config.root_path + config.dataset_path_segmented_faces)
 
   for epoch in tqdm(range(config.num_epochs)):
-    loss_rec1, loss_rec2, loss_dann,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach, loss_disc1_real_cartoons, loss_disc1_fake_cartoons = train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterionDenoiser)
+    loss_rec1, loss_rec2, loss_dann,loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach, loss_disc1_real_cartoons, loss_disc1_fake_cartoons = train(config, model, device, train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterion_l1, criterion_l2)
     generated_images = test_image(model, device, images_faces_to_test)
 
 
