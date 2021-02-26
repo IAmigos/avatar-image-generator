@@ -72,6 +72,9 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
         d2.zero_grad()
         c_dann.zero_grad()
 
+        if faces_batch.shape != cartoons_batch.shape:
+              continue
+
         # architecture
         faces_enc1 = e1(faces_batch)
         faces_encoder = e_shared(faces_enc1)

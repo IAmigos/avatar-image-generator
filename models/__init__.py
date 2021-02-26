@@ -407,6 +407,8 @@ def get_gradient(crit, real, fake, epsilon):
         gradient: the gradient of the critic's scores, with respect to the mixed image
     '''
     # Mix the images together
+
+
     mixed_images = real * epsilon + fake * (1 - epsilon)
 
     # Calculate the critic's scores on the mixed images
