@@ -353,9 +353,9 @@ class Critic(nn.Module):
         self.crit = nn.Sequential(
             # (1024 +2*pd - ks)/stride + 1 = 512
             self.make_crit_block(im_chan, hidden_dim),
-            self.make_crit_block(hidden_dim, hidden_dim / 2),
-            self.make_crit_block(hidden_dim/2, hidden_dim / 4),
-            self.make_crit_block(hidden_dim / 4, 1, final_layer=True),  # 1
+            self.make_crit_block(hidden_dim, hidden_dim // 2),
+            self.make_crit_block(hidden_dim // 2, hidden_dim // 4),
+            self.make_crit_block(hidden_dim // 4, 1, final_layer=True),  # 1
         )
 
     def make_crit_block(self, input_channels, output_channels, kernel_size=4, stride=2, final_layer=False):
