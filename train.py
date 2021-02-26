@@ -94,7 +94,7 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
 
         # train critic(cdann)
 
-        mean_iteration_critic_loss = torch.zeros(1)
+        mean_iteration_critic_loss = torch.zeros(1).to(device)
         crit_repeats = 5
         for _ in range(crit_repeats):
             ### Update critic ###
