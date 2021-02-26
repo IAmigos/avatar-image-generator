@@ -145,7 +145,8 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
         loss_gen1 = criterion_bc(output.squeeze(), torch.ones_like(
             output.squeeze(), device=device))
 
-        loss_total = config.wRec_loss*loss_rec + config.wDann_loss*loss_dann + \
+        #it has been deleted config.wDann_loss*loss_dann
+        loss_total = config.wRec_loss*loss_rec  + \
             config.wSem_loss*loss_sem + config.wGan_loss * \
             loss_gen1 + config.wTeach_loss*loss_teach
         loss_total.backward()
