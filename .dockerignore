@@ -152,6 +152,7 @@ data/
 datasets/
 weights_trained/
 wandb/
+preprocessing/
 
 #nohup
 *.out
