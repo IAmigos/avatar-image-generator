@@ -102,10 +102,10 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
             crit_fake_pred = c_dann(faces_encoder)  # bs, 1024
             crit_real_pred = c_dann(cartoons_encoder)
 
-            epsilon = torch.rand(len(cartoons_encoder), 1,
-                                 1, 1, device=device, requires_grad=True)
+            epsilon = torch.rand(len(cartoons_encoder),
+                                 device=device, requires_grad=True)
             gradient = get_gradient(
-                c_dann, cartoons_encoder, faces_encoder.detach(), epsilon)
+                c_dann, cartoons_encoder, faces_encoder, epsilon)
             gp = gradient_penalty(gradient)
             crit_loss = get_crit_loss(
                 crit_fake_pred, crit_real_pred, gp, 10)
