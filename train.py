@@ -102,7 +102,7 @@ def train(config, model, device, train_loader_faces, train_loader_cartoons, opti
             crit_fake_pred = c_dann(faces_encoder)  # bs, 1024
             crit_real_pred = c_dann(cartoons_encoder)
 
-            epsilon = torch.rand(len(cartoons_encoder),
+            epsilon = torch.rand(len(cartoons_encoder), 1,
                                  device=device, requires_grad=True)
             gradient = get_gradient(
                 c_dann, cartoons_encoder, faces_encoder, epsilon)
@@ -201,7 +201,7 @@ def model_train(config_file, use_wandb=True):
     config = configure_model(config_file, use_wandb)
 
     device = torch.device(
-        "cuda:0" if config.use_gpu and torch.cuda.is_available() else "cpu")
+        "cuda:" + (os.getenv('N_CUDA')if os.getenv('N_CUDA') else "0") if config.use_gpu and torch.cuda.is_available() else "cpu")
     #device = cf.DEVICE
     #device = torch.device(device)
     if config.use_gpu and torch.cuda.is_available():
