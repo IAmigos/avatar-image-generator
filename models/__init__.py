@@ -348,12 +348,14 @@ class Critic(nn.Module):
         hidden_dim: the inner dimension, a scalar
     '''
 
-    def __init__(self, im_chan=1, hidden_dim=1024):
+    def __init__(self, im_chan=1024, hidden_dim=512):
         super(Critic, self).__init__()
         self.crit = nn.Sequential(
+            # (1024 +2*pd - ks)/stride + 1 = 512
             self.make_crit_block(im_chan, hidden_dim),
-            self.make_crit_block(hidden_dim, hidden_dim * 2),
-            self.make_crit_block(hidden_dim * 2, 1, final_layer=True),
+            self.make_crit_block(hidden_dim, hidden_dim / 2),
+            self.make_crit_block(hidden_dim/2, hidden_dim / 4),
+            self.make_crit_block(hidden_dim / 4, 1, final_layer=True),  # 1
         )
 
     def make_crit_block(self, input_channels, output_channels, kernel_size=4, stride=2, final_layer=False):
@@ -370,15 +372,15 @@ class Critic(nn.Module):
         '''
         if not final_layer:
             return nn.Sequential(
-                nn.Conv2d(input_channels, output_channels,
-                          kernel_size, stride),
-                nn.BatchNorm2d(output_channels),
+                nn.Linear(in_features=input_channels,
+                          out_features=output_channels),
+                nn.BatchNorm1d(output_channels),
                 nn.LeakyReLU(0.2, inplace=True),
             )
         else:
             return nn.Sequential(
-                nn.Conv2d(input_channels, output_channels,
-                          kernel_size, stride),
+                nn.Linear(in_features=input_channels,
+                          out_features=output_channels),
             )
 
     def forward(self, image):
