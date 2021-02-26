@@ -352,7 +352,7 @@ def init_model(device, config, use_wandb=True):
     d1 = Decoder()
     d2 = Decoder()
     # c_dann = Cdann(config.dropout_rate_cdann)
-    c_dann = Critic(im_chan=1, hidden_dim=1024)
+    c_dann = Critic()
     discriminator1 = Discriminator()
     denoiser = Denoiser()
 
