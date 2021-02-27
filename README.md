@@ -27,7 +27,7 @@ This is an image-to-image translation problem, which involves many classic compu
 
 ## Directory structure
 
-  config.json: contains the model configuration to train/test the model
+  config.json: contains the model configuration to train the model and deploy the app
   
   weights: contains weights that we saved the last time we train the model. 
 
@@ -99,7 +99,7 @@ This is an image-to-image translation problem, which involves many classic compu
 
    The model was trained using the hyperparameters located in config.json. Weights & Biases was used to find the best hyperparameters:
 
-1. Change config.json
+1. Change `root_path` in `config json`. It specifies where is `datasets` which contains the datasets. 
 2. Run `wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911` to use wandb to get the report
 3. Run `python3 train.py --wandb` or `python3 train.py --no-wandb`
 
@@ -119,6 +119,7 @@ This is an image-to-image translation problem, which involves many classic compu
    
          sudo docker run -v /home/stevramos/Documents/personal_projects/xgan/avatar-image-generator/weights_trained/:/src/weights_trained/ -v /home/stevramos/Documents/personal_projects/xgan/avatar-image-generator/datasets/:/src/datasets/ -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911 && python train.py --wandb"
 
-   * Run the app locally as a daemon in docker`sudo docker run -d -p 8000:9999 -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && python app.py"`
+   * Run the app locally as a daemon in docker. `model_path` in `config.json` contains the weights to use in deployment
+        `sudo docker run -d -p 8000:9999 -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && python app.py"`
    
       a. Local server: [http://0.0.0.0:8000/](http://0.0.0.0:8000/)
