@@ -15,7 +15,7 @@ import base64
 import os , io , sys
 
 ALLOWED_EXTENSIONS = set(['jpg', 'jpeg', 'png'])
-
+CONFIG_FILENAME = "config.json"
 DOWNLOAD_DIRECTORY = None
 
 def allowed_file(filename):
@@ -50,12 +50,6 @@ def face_to_cartoon(DOC_FILE, face):
     cartoon, cartoon_tensor = MODEL.generate(DOWNLOAD_DIRECTORY + filename_face, DOWNLOAD_DIRECTORY + filename_cartoon)
     
     return filename_cartoon
-
-def serve_pil_image(pil_img):
-    img_io = io.BytesIO()
-    pil_img.save(img_io, 'JPEG', quality=70)
-    img_io.seek(0)
-    return send_file(img_io, mimetype='image/jpeg')    
 
 
 @app.route('/send_image', methods=['POST'])
@@ -106,9 +100,12 @@ def predict():
 
 if __name__ == "__main__":
 
-    config = configure_model("config.json",use_wandb=False)
+    use_wandb = False
+    config = configure_model(CONFIG_FILENAME,use_wandb=use_wandb)
     DOWNLOAD_DIRECTORY = config.download_directory
 
-    MODEL = Avatar_Generator_Model(config.model_path, config.device)
+    #MODEL = Avatar_Generator_Model(config.model_path, config.device)
+    MODEL = Avatar_Generator_Model(config, use_wandb=use_wandb)
+    MODEL.load_weights(config.model_path)
 
     app.run(host="0.0.0.0", port="9999")

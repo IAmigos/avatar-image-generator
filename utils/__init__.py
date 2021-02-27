@@ -2,7 +2,6 @@ import wandb
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-# %matplotlib inline
 import os
 import sys
 import argparse
@@ -26,10 +25,12 @@ from keras_segmentation.pretrained import pspnet_50_ADE_20K, pspnet_101_cityscap
 import cv2
 import helper
 import json
-from models import *
 
-#from facenet_pytorch import InceptionResnetV1
 
+IMAGE_SIZE = 64
+MEAN = 0.5
+SD = 0.5
+STATS = (MEAN, MEAN, MEAN), (SD, SD, SD)
 
 def set_seed(seed):
     """Set seed"""
@@ -99,7 +100,6 @@ def configure_model(config_file, use_wandb):
         config = type("configuration", (object,), {})
 
     config.model_path = config_file["server_config"]["model_path"]
-    config.device = config_file["server_config"]["device"]
     config.download_directory = config_file["server_config"]["download_directory"]
 
     config.root_path = config_file["train_dataset_params"]["root_path"]
@@ -110,9 +110,6 @@ def configure_model(config_file, use_wandb):
         "train_dataset_params"]["dataset_path_segmented_faces"]
     config.dataset_path_output_faces = config_file["train_dataset_params"]["dataset_path_output_faces"]
     config.batch_size = config_file["train_dataset_params"]["loader_params"]["batch_size"]
-    config.image_size = config_file["train_dataset_params"]["loader_params"]["image_size"]
-    config.shuffle = config_file["train_dataset_params"]["loader_params"]["shuffle"]
-    config.workers = config_file["train_dataset_params"]["loader_params"]["workers"]
 
     config.save_weights = config_file["train_dataset_params"]["save_weights"]
     config.num_backups = config_file["train_dataset_params"]["num_backups"]
@@ -163,24 +160,39 @@ def save_weights(model, path_sub, use_wandb=True):
                    base_path='/'.join(path_sub.split('/')[:-2]))
 
 
-def get_datasets(config):
-
-    path_faces = config.root_path + config.dataset_path_faces
-    path_cartoons = config.root_path + config.dataset_path_cartoons
-
-    stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
-
-    transform_faces = transforms.Compose([
-        transforms.Resize((config.image_size, config.image_size)),
+def get_transforms_config_face():
+    list_transforms = [
+        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
         transforms.ToTensor(),
-        transforms.Normalize(*stats)])
+        transforms.Normalize(*STATS)
+    ]
 
-    transform_cartoons = transforms.Compose([
+    return list_transforms
+
+
+def get_transforms_config_cartoon():
+    list_transforms = [
         transforms.CenterCrop(400),
-        transforms.Resize((config.image_size, config.image_size)),
+        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
         transforms.ToTensor(),
-        transforms.Normalize(*stats)
-    ])
+        transforms.Normalize(*STATS)
+    ]
+
+    return list_transforms
+
+def get_datasets(root_path, dataset_path_faces, dataset_path_cartoons, batch_size):
+
+    path_faces = root_path + dataset_path_faces
+    path_cartoons = root_path + dataset_path_cartoons
+
+    #stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+
+    transform_list_faces = get_transforms_config_face()
+    transform_list_cartoons = get_transforms_config_cartoon()
+
+    transform_faces = transforms.Compose(transform_list_faces)
+
+    transform_cartoons = transforms.Compose(transform_list_cartoons)
 
     dataset_faces = torchvision.datasets.ImageFolder(
         path_faces, transform=transform_faces)
@@ -192,30 +204,30 @@ def get_datasets(config):
 
     train_loader_faces = torch.utils.data.DataLoader(
         train_dataset_faces,
-        batch_size=config.batch_size,
-        shuffle=config.shuffle,
-        num_workers=config.workers)
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4)
 
     test_loader_faces = torch.utils.data.DataLoader(
         test_dataset_faces,
-        batch_size=config.batch_size,
-        shuffle=config.shuffle,
-        num_workers=config.workers)
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4)
 
     train_dataset_cartoons, test_dataset_cartoons = torch.utils.data.random_split(dataset_cartoons,
                                                                                   (int(len(dataset_cartoons)*0.9), len(dataset_cartoons) - int(len(dataset_cartoons)*0.9)))
 
     train_loader_cartoons = torch.utils.data.DataLoader(
         train_dataset_cartoons,
-        batch_size=config.batch_size,
-        shuffle=config.shuffle,
-        num_workers=config.workers)
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4)
 
     test_loader_cartoons = torch.utils.data.DataLoader(
         test_dataset_cartoons,
-        batch_size=config.batch_size,
-        shuffle=config.shuffle,
-        num_workers=config.workers)
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4)
 
     return (train_loader_faces, test_loader_faces, train_loader_cartoons, test_loader_cartoons)
 
@@ -243,8 +255,8 @@ def remove_background_image(model, path_filename, output_path):
     cv2.imwrite(output_path + output_file, bg)
 
 
-def remove_background(path_test_faces, path_segmented_faces):
-    model = pspnet_101_voc12()
+def remove_background(model, path_test_faces, path_segmented_faces):
+    #model = pspnet_101_voc12()
 
     path = path_test_faces + 'data/'
     output_path = path_segmented_faces + 'data/'
@@ -258,28 +270,25 @@ def remove_background(path_test_faces, path_segmented_faces):
         remove_background_image(model, path + filename, output_path)
 
 
-def get_test_images(config, path_test_faces, path_segmented_faces):
+def get_test_images(model, batch_size, path_test_faces, path_segmented_faces):
 
-    remove_background(path_test_faces, path_segmented_faces)
+    remove_background(model, path_test_faces, path_segmented_faces)
 
     path_test_images = path_segmented_faces
 
-    stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+    #stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+    transform_list_faces = get_transforms_config_face()
+    transform_list_faces += [transforms.CenterCrop(IMAGE_SIZE)]
 
-    transform = transforms.Compose([
-        transforms.Resize((config.image_size, config.image_size)),
-        transforms.CenterCrop(64),
-        transforms.ToTensor(),
-        transforms.Normalize(*stats)
-    ])
+    transform = transforms.Compose(transform_list_faces)
 
     dataset_test_images = torchvision.datasets.ImageFolder(
         path_test_images, transform=transform)
 
     test_loader_images = torch.utils.data.DataLoader(
         dataset_test_images,
-        batch_size=config.batch_size,
-        num_workers=config.workers)
+        batch_size=batch_size,
+        num_workers=4)
 
     dataiter = iter(test_loader_images)
     test_images = dataiter.next()
@@ -288,9 +297,9 @@ def get_test_images(config, path_test_faces, path_segmented_faces):
 
 
 def denorm(img_tensors):
-    stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+    #stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
 
-    return img_tensors * stats[1][0] + stats[0][0]
+    return img_tensors * STATS[1][0] + STATS[0][0]
 
 
 def test_image(model, device, images_faces):
@@ -319,23 +328,23 @@ def test_image(model, device, images_faces):
     return output.cpu()
 
 
-def init_optimizers(model, config):
+def init_optimizers(model, learning_rate_opDisc, learning_rate_opTotal, learning_rate_denoiser):
 
     e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
 
     listDisc1 = list(discriminator1.parameters())
     optimizerDisc1 = torch.optim.Adam(
-        listDisc1, lr=config.learning_rate_opDisc, betas=(0.5, 0.999))
+        listDisc1, lr=learning_rate_opDisc, betas=(0.5, 0.999))
 
     #listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + list(d_shared.parameters()) + list(d1.parameters()) + list(d2.parameters()) + list(c_dann.parameters())
     listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + \
         list(d_shared.parameters()) + \
         list(d1.parameters()) + list(d2.parameters())
     optimizerTotal = torch.optim.Adam(
-        listParameters, lr=config.learning_rate_opTotal, betas=(0.5, 0.999))
+        listParameters, lr=learning_rate_opTotal, betas=(0.5, 0.999))
 
     optimizerDenoiser = torch.optim.Adam(
-        denoiser.parameters(), lr=config.learning_rate_denoiser)
+        denoiser.parameters(), lr=learning_rate_denoiser)
 
     crit_opt = torch.optim.Adam(
         c_dann.parameters(), lr=0.0002, betas=(0.5, 0.999))
@@ -343,51 +352,3 @@ def init_optimizers(model, config):
     return (optimizerDenoiser, optimizerDisc1, optimizerTotal, crit_opt)
 
 
-def init_model(device, config, use_wandb=True):
-
-    e1 = Encoder()
-    e2 = Encoder()
-    e_shared = Eshared(config.dropout_rate_eshared)
-    d_shared = Dshared()
-    d1 = Decoder()
-    d2 = Decoder()
-    # c_dann = Cdann(config.dropout_rate_cdann)
-    c_dann = Critic()
-    discriminator1 = Discriminator()
-    denoiser = Denoiser()
-
-    e1.to(device)
-    e2.to(device)
-    e_shared.to(device)
-    d_shared.to(device)
-    d1.to(device)
-    d2.to(device)
-    c_dann.to(device)
-    discriminator1.to(device)
-    denoiser = denoiser.to(device)
-
-    if use_wandb:
-        wandb.watch(e1, log="all")
-        wandb.watch(e2, log="all")
-        wandb.watch(e_shared, log="all")
-        wandb.watch(d_shared, log="all")
-        wandb.watch(d1, log="all")
-        wandb.watch(d2, log="all")
-        wandb.watch(c_dann, log="all")
-        wandb.watch(discriminator1, log="all")
-        wandb.watch(denoiser, log="all")
-
-    return (e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser)
-
-
-def load_weights_xgan(path_load_weights, e1, e2, e_shared, d_shared, d1, d2, denoiser):
-
-    e1.load_state_dict(torch.load(path_load_weights + 'e1.pth'))
-    e2.load_state_dict(torch.load(path_load_weights + 'e2.pth'))
-    e_shared.load_state_dict(torch.load(path_load_weights + 'e_shared.pth'))
-    d_shared.load_state_dict(torch.load(path_load_weights + 'd_shared.pth'))
-    d1.load_state_dict(torch.load(path_load_weights + 'd1.pth'))
-    d2.load_state_dict(torch.load(path_load_weights + 'd2.pth'))
-    denoiser.load_state_dict(torch.load(path_load_weights + 'denoiser.pth'))
-
-    return
