@@ -21,7 +21,7 @@ import wandb
 import os
 import sys
 from tqdm import tqdm
-
+from itertools import cycle
 
 
 class Avatar_Generator_Model():
@@ -205,7 +205,7 @@ class Avatar_Generator_Model():
         self.discriminator1.train()
         self.denoiser.train()
 
-        for faces_batch, cartoons_batch in zip(train_loader_faces, train_loader_cartoons):
+        for faces_batch, cartoons_batch in zip(cycle(train_loader_faces), train_loader_cartoons):
 
             faces_batch, _ = faces_batch
             faces_batch = Variable(faces_batch.type(torch.Tensor))
