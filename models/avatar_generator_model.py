@@ -163,7 +163,7 @@ class Avatar_Generator_Model():
 
         return (torchvision.transforms.ToPILImage()(output), output)
 
-    def get_loss_test_set(self, test_loader_faces, test_loader_cartoons):
+    def get_loss_test_set(self, test_loader_faces, test_loader_cartoons, criterion_bc, criterion_l1, criterion_l2):
         
         self.e1.eval()
         self.e2.eval()
@@ -446,7 +446,7 @@ class Avatar_Generator_Model():
                 except OSError:
                     pass
                 save_weights(model, path_save_epoch, self.use_wandb)
-                loss_test = self.get_loss_test_set(test_loader_faces, test_loader_cartoons)
+                loss_test = self.get_loss_test_set(test_loader_faces, test_loader_cartoons, criterion_bc, criterion_l1, criterion_l2)
                 generated_images = test_image(model, self.device, images_faces_to_test)
                 
                 metrics_log["loss_total_test"] = loss_test
