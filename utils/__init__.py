@@ -121,6 +121,7 @@ def configure_model(config_file, use_wandb):
     config.learning_rate_opTotal = config_file["model_hparams"]["learning_rate_opTotal"]
     config.learning_rate_opDisc = config_file["model_hparams"]["learning_rate_opDisc"]
     config.learning_rate_denoiser = config_file["model_hparams"]["learning_rate_denoiser"]
+    config.learning_rate_opCdann = config_file["model_hparams"]["learning_rate_opCdann"]
     config.wRec_loss = config_file["model_hparams"]["wRec_loss"]
     config.wDann_loss = config_file["model_hparams"]["wDann_loss"]
     config.wSem_loss = config_file["model_hparams"]["wSem_loss"]
@@ -328,7 +329,10 @@ def test_image(model, device, images_faces):
     return output.cpu()
 
 
-def init_optimizers(model, learning_rate_opDisc, learning_rate_opTotal, learning_rate_denoiser):
+            
+
+
+def init_optimizers(model, learning_rate_opDisc, learning_rate_opTotal, learning_rate_denoiser, learning_rate_opCdann):
 
     e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
 
@@ -347,7 +351,7 @@ def init_optimizers(model, learning_rate_opDisc, learning_rate_opTotal, learning
         denoiser.parameters(), lr=learning_rate_denoiser)
 
     crit_opt = torch.optim.Adam(
-        c_dann.parameters(), lr=0.0002, betas=(0.5, 0.999))
+        c_dann.parameters(), lr=learning_rate_opCdann, betas=(0.5, 0.999))
 
     return (optimizerDenoiser, optimizerDisc1, optimizerTotal, crit_opt)
 

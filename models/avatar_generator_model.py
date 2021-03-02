@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from PIL import Image
 from keras_segmentation.pretrained import pspnet_101_voc12
 import cv2
-
+import numpy as np
 
 from .encoder import *
 from .decoder import *
@@ -163,6 +163,75 @@ class Avatar_Generator_Model():
 
         return (torchvision.transforms.ToPILImage()(output), output)
 
+    def get_loss_test_set(self, test_loader_faces, test_loader_cartoons):
+        
+        self.e1.eval()
+        self.e2.eval()
+        self.e_shared.eval()
+        self.d_shared.eval()
+        self.d1.eval()
+        self.d2.eval()
+        self.c_dann.eval()
+        self.discriminator1.eval()
+        self.denoiser.eval()
+
+        loss_test = []
+
+        with torch.no_grad():
+            for faces_batch, cartoons_batch in zip(cycle(test_loader_faces), test_loader_cartoons):
+                
+                faces_batch, _ = faces_batch
+                faces_batch = Variable(faces_batch.type(torch.Tensor))
+                faces_batch = faces_batch.to(self.device)
+
+                cartoons_batch, _ = cartoons_batch
+                cartoons_batch = Variable(cartoons_batch.type(torch.Tensor))
+                cartoons_batch = cartoons_batch.to(self.device)
+
+                if faces_batch.shape != cartoons_batch.shape:
+                    continue
+
+                faces_enc1 = self.e1(faces_batch)
+                faces_encoder = self.e_shared(faces_enc1)
+                faces_decoder = self.d_shared(faces_encoder)
+                faces_rec = self.d1(faces_decoder)
+                cartoons_construct = self.d2(faces_decoder)
+                cartoons_construct_enc2 = self.e2(cartoons_construct)
+                cartoons_construct_encoder = self.e_shared(cartoons_construct_enc2)
+
+                cartoons_enc2 = self.e2(cartoons_batch)
+                cartoons_encoder = self.e_shared(cartoons_enc2)
+                cartoons_decoder = self.d_shared(cartoons_encoder)
+                cartoons_rec = self.d2(cartoons_decoder)
+                faces_construct = self.d1(cartoons_decoder)
+                faces_construct_enc1 = self.e1(faces_construct)
+                faces_construct_encoder = self.e_shared(faces_construct_enc1)
+
+                loss_rec1 = L2_norm(faces_batch, faces_rec)
+                loss_rec2 = L2_norm(cartoons_batch, cartoons_rec)
+                loss_rec = loss_rec1 + loss_rec2
+
+                loss_sem1 = L1_norm(faces_encoder.detach(), cartoons_construct_encoder)
+                loss_sem2 = L1_norm(cartoons_encoder.detach(), faces_construct_encoder)
+                loss_sem = loss_sem1 + loss_sem2
+
+                loss_teach = torch.Tensor([1])
+                loss_teach = loss_teach.to(self.device)
+
+                output = self.discriminator1(cartoons_construct)
+
+                loss_gen1 = criterion_bc(output.squeeze(), torch.ones_like(
+                    output.squeeze(), device=self.device))
+
+                loss_total = self.config.wRec_loss*loss_rec  + \
+                    self.config.wSem_loss*loss_sem + self.config.wGan_loss * \
+                    loss_gen1 + self.config.wTeach_loss*loss_teach
+
+                loss_test.append(loss_total.item())
+            
+
+        return np.mean(loss_test)
+
 
     def train_crit_repeats(self, crit_opt, faces_encoder, cartoons_encoder, crit_repeats=5):
 
@@ -179,7 +248,7 @@ class Avatar_Generator_Model():
                 self.c_dann, cartoons_encoder, faces_encoder, epsilon)
             gp = gradient_penalty(gradient)
             crit_loss = get_crit_loss(
-                crit_fake_pred, crit_real_pred, gp, 10)
+                crit_fake_pred, crit_real_pred, gp, 10) * self.config.wDann_loss
 
             # Keep track of the average critic loss in this batch
             mean_iteration_critic_loss += crit_loss / crit_repeats
@@ -209,15 +278,11 @@ class Avatar_Generator_Model():
 
             faces_batch, _ = faces_batch
             faces_batch = Variable(faces_batch.type(torch.Tensor))
-            #class_faces = Variable(torch.zeros(faces_batch.size(0)))
             faces_batch = faces_batch.to(self.device)
-            #class_faces = class_faces.to(device)
 
             cartoons_batch, _ = cartoons_batch
             cartoons_batch = Variable(cartoons_batch.type(torch.Tensor))
-            #class_cartoons = Variable(torch.ones(cartoons_batch.size(0)))
             cartoons_batch = cartoons_batch.to(self.device)
-            #class_cartoons = class_cartoons.to(device)
 
             self.e1.zero_grad()
             self.e2.zero_grad()
@@ -345,20 +410,8 @@ class Avatar_Generator_Model():
         model = (self.e1, self.e2, self.d1, self.d2, self.e_shared, self.d_shared, self.c_dann, self.discriminator1, self.denoiser)
 
         train_loader_faces, test_loader_faces, train_loader_cartoons, test_loader_cartoons = get_datasets(self.config.root_path, self.config.dataset_path_faces, self.config.dataset_path_cartoons, self.config.batch_size)
-        optimizers = init_optimizers(model, self.config.learning_rate_opDisc, self.config.learning_rate_opTotal, self.config.learning_rate_denoiser)
+        optimizers = init_optimizers(model, self.config.learning_rate_opDisc, self.config.learning_rate_opTotal, self.config.learning_rate_denoiser, self.config.learning_rate_opCdann)
 
-        train_loss_rec1 = []
-        train_loss_rec2 = []
-        train_loss_cdan = []
-        train_loss_sem1 = []
-        train_loss_sem2 = []
-        train_disc1_real = []
-        train_disc1_fake = []
-        train_disc1 = []
-        train_gen1 = []
-        train_loss_total = []
-        train_loss_denoiser = []
-        train_loss_teacher = []
 
         criterion_bc = nn.BCELoss()
         criterion_l1 = nn.L1Loss()
@@ -372,23 +425,19 @@ class Avatar_Generator_Model():
 
         for epoch in tqdm(range(self.config.num_epochs)):
             loss_rec1, loss_rec2, loss_dann, loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach, loss_disc1_real_cartoons, loss_disc1_fake_cartoons = self.train_step(train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterion_l1, criterion_l2)
-            generated_images = test_image(model, self.device, images_faces_to_test)
 
-
-            if self.use_wandb:
-                wandb.log({"train_epoch": epoch+1,
-                        "Generated images": [wandb.Image(img) for img in generated_images],
-                        "loss_rec1": loss_rec1.item(),
-                        "loss_rec2": loss_rec2.item(),
-                        "loss_dann": loss_dann.item(),
-                        "loss_semantic12": loss_sem1.item(),
-                        "loss_semantic21": loss_sem2.item(),
-                        "loss_disc1_real_cartoons": loss_disc1_real_cartoons.item(),
-                        "loss_disc1_fake_cartoons": loss_disc1_fake_cartoons.item(),
-                        "loss_disc1": loss_disc1.item(),
-                        "loss_gen1": loss_gen1.item(),
-                        "loss_teach": loss_teach.item(),
-                        "loss_total": loss_total.item()})
+            metrics_log = {"train_epoch": epoch+1,
+                        "loss_rec1": loss_rec1,
+                        "loss_rec2": loss_rec2,
+                        "loss_dann": loss_dann,
+                        "loss_semantic12": loss_sem1,
+                        "loss_semantic21": loss_sem2,
+                        "loss_disc1_real_cartoons": loss_disc1_real_cartoons,
+                        "loss_disc1_fake_cartoons": loss_disc1_fake_cartoons,
+                        "loss_disc1": loss_disc1,
+                        "loss_gen1": loss_gen1,
+                        "loss_teach": loss_teach,
+                        "loss_total": loss_total}
 
             if self.config.save_weights and ((epoch+1) % int(self.config.num_epochs/self.config.num_backups)) == 0:
                 path_save_epoch = path_save_weights + 'epoch_{}'.format(epoch+1)
@@ -397,20 +446,15 @@ class Avatar_Generator_Model():
                 except OSError:
                     pass
                 save_weights(model, path_save_epoch, self.use_wandb)
+                loss_test = self.get_loss_test_set(test_loader_faces, test_loader_cartoons)
+                generated_images = test_image(model, self.device, images_faces_to_test)
+                
+                metrics_log["loss_total_test"] = loss_test
+                metrics_log["Generated images"] = [wandb.Image(img) for img in generated_images]
 
+            if self.use_wandb:
+                wandb.log(metrics_log)
 
-            train_loss_rec1.append(loss_rec1.item())
-            train_loss_rec2.append(loss_rec2.item())
-            train_loss_cdan.append(loss_dann.item())
-            train_loss_sem1.append(loss_sem1.item())
-            train_loss_sem2.append(loss_sem2.item())
-            train_disc1.append(loss_disc1.item())
-            train_gen1.append(loss_gen1.item())
-            train_loss_total.append(loss_total.item())
-            train_loss_denoiser.append(loss_denoiser.item())
-            train_loss_teacher.append(loss_teach.item())
-            train_disc1_real.append(loss_disc1_real_cartoons)
-            train_disc1_fake.append(loss_disc1_fake_cartoons)
 
             print("Losses")
             print('Epoch [{}/{}], Loss rec1: {:.4f}'.format(epoch +
