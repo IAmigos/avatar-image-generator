@@ -1,0 +1,32 @@
+program: train.py
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - "--wandb"
+  - ${args}
+method: random
+metric:
+  name: loss_total
+  goal: minimize
+parameters:
+  wRec_loss:
+    distribution: uniform
+    min: 0.75
+    max: 1.0
+  wDann_loss:
+    distribution: uniform
+    min: 0.25
+    max: 1.0
+  wSem_loss:
+    distribution: uniform
+    min: 0.25
+    max: 1.0
+  wGan_loss:
+    distribution: uniform
+    min: 0.25
+    max: 1.0
+early_terminate:
+  type: hyperband
+  min_iter: 10
+  eta: 2
