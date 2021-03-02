@@ -427,17 +427,17 @@ class Avatar_Generator_Model():
             loss_rec1, loss_rec2, loss_dann, loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach, loss_disc1_real_cartoons, loss_disc1_fake_cartoons = self.train_step(train_loader_faces, train_loader_cartoons, optimizers, criterion_bc, criterion_l1, criterion_l2)
 
             metrics_log = {"train_epoch": epoch+1,
-                        "loss_rec1": loss_rec1,
-                        "loss_rec2": loss_rec2,
-                        "loss_dann": loss_dann,
-                        "loss_semantic12": loss_sem1,
-                        "loss_semantic21": loss_sem2,
-                        "loss_disc1_real_cartoons": loss_disc1_real_cartoons,
-                        "loss_disc1_fake_cartoons": loss_disc1_fake_cartoons,
-                        "loss_disc1": loss_disc1,
-                        "loss_gen1": loss_gen1,
-                        "loss_teach": loss_teach,
-                        "loss_total": loss_total}
+                        "loss_rec1": loss_rec1.cpu(),
+                        "loss_rec2": loss_rec2.cpu(),
+                        "loss_dann": loss_dann.cpu(),
+                        "loss_semantic12": loss_sem1.cpu(),
+                        "loss_semantic21": loss_sem2.cpu(),
+                        "loss_disc1_real_cartoons": loss_disc1_real_cartoons.cpu(),
+                        "loss_disc1_fake_cartoons": loss_disc1_fake_cartoons.cpu(),
+                        "loss_disc1": loss_disc1.cpu(),
+                        "loss_gen1": loss_gen1.cpu(),
+                        "loss_teach": loss_teach.cpu(),
+                        "loss_total": loss_total.cpu()}
 
             if self.config.save_weights and ((epoch+1) % int(self.config.num_epochs/self.config.num_backups)) == 0:
                 path_save_epoch = path_save_weights + 'epoch_{}'.format(epoch+1)
