@@ -94,10 +94,13 @@ This is an image-to-image translation problem, which involves many classic compu
 16 directories, 51 files
 ```
 ## The model
+Our codebase is in Python3. We suggest creating a new virtual environment.
+   * The required packages can be installed by running `pip3 install -r requirements.tx`
+   * Update `N_CUDA` by running `export N_CUDA=<gpu_number>` if you want to specify the GPU to use 
 
    It is based on the XGAN paper omitting the Teacher Loss and adding an autoencoder in the end. The latter was trained to learn well only the representation of the cartoons as to "denoise" the spots and wrong colorisation from the face-to-cartoon outputs of the XGAN.
 
-   The model was trained using the hyperparameters located in config.json. Weights & Biases was used to find the best hyperparameters:
+   The model was trained using the hyperparameters located in config.json. Weights & Biases Sweep was used to find the best hyperparameters:
 
 1. Change `root_path` in `config json`. It specifies where is `datasets` which contains the datasets. 
 2. Run `wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911` to use wandb to get the report
@@ -105,7 +108,7 @@ This is an image-to-image translation problem, which involves many classic compu
 
   You can see the Weights & Biases report here: https://wandb.ai/stevramos/avatar_image_generator
   
-  This is the implementation of [our project](https://madewithml.com/projects/1233/generating-avatars-from-real-life-pictures/) created for the Made With ML Data Science Incubator.
+  This is the implementation of [our project](https://madewithml.com/projects/1233/generating-avatars-from-real-life-pictures/) created for the Made With ML Data Science Incubator (deprecated).
 
 
 ## Docker
