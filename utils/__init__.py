@@ -47,7 +47,7 @@ def set_seed(seed):
 
 def parse_arguments():
     ap = argparse.ArgumentParser()
-    ap.add_argument('-w', '--wandb', default=False, action='store_true',
+    ap.add_argument('-w', '--wandb', default=True, action='store_true',
                     help="use weights and biases")
     ap.add_argument('-nw  ', '--no-wandb', dest='wandb', action='store_false',
                     help="not use weights and biases")
@@ -94,40 +94,39 @@ def configure_model(config_file, use_wandb):
 
     config_file = parse_configuration(config_file)
 
-    if use_wandb:
-        config = wandb.config
-    else:
-        config = type("configuration", (object,), {})
+    config = dict(
+        model_path=config_file["server_config"]["model_path"],
+        download_directory=config_file["server_config"]["download_directory"],
 
-    config.model_path = config_file["server_config"]["model_path"]
-    config.download_directory = config_file["server_config"]["download_directory"]
+        root_path=config_file["train_dataset_params"]["root_path"],
+        dataset_path_faces=config_file["train_dataset_params"]["dataset_path_faces"],
+        dataset_path_cartoons=config_file["train_dataset_params"]["dataset_path_cartoons"],
+        dataset_path_test_faces=config_file["train_dataset_params"]["dataset_path_test_faces"],
+        dataset_path_segmented_faces=config_file["train_dataset_params"]["dataset_path_segmented_faces"],
+        dataset_path_output_faces=config_file["train_dataset_params"]["dataset_path_output_faces"],
+        batch_size=config_file["train_dataset_params"]["loader_params"]["batch_size"],
 
-    config.root_path = config_file["train_dataset_params"]["root_path"]
-    config.dataset_path_faces = config_file["train_dataset_params"]["dataset_path_faces"]
-    config.dataset_path_cartoons = config_file["train_dataset_params"]["dataset_path_cartoons"]
-    config.dataset_path_test_faces = config_file["train_dataset_params"]["dataset_path_test_faces"]
-    config.dataset_path_segmented_faces = config_file[
-        "train_dataset_params"]["dataset_path_segmented_faces"]
-    config.dataset_path_output_faces = config_file["train_dataset_params"]["dataset_path_output_faces"]
-    config.batch_size = config_file["train_dataset_params"]["loader_params"]["batch_size"]
+        save_weights=config_file["train_dataset_params"]["save_weights"],
+        num_backups=config_file["train_dataset_params"]["num_backups"],
+        save_path=config_file["train_dataset_params"]["save_path"],
 
-    config.save_weights = config_file["train_dataset_params"]["save_weights"]
-    config.num_backups = config_file["train_dataset_params"]["num_backups"]
-    config.save_path = config_file["train_dataset_params"]["save_path"]
+        dropout_rate_eshared=config_file["model_hparams"]["dropout_rate_eshared"],
+        dropout_rate_cdann=config_file["model_hparams"]["dropout_rate_cdann"],
+        num_epochs=config_file["model_hparams"]["num_epochs"],
+        learning_rate_opTotal=config_file["model_hparams"]["learning_rate_opTotal"],
+        learning_rate_opDisc=config_file["model_hparams"]["learning_rate_opDisc"],
+        learning_rate_denoiser=config_file["model_hparams"]["learning_rate_denoiser"],
+        learning_rate_opCdann=config_file["model_hparams"]["learning_rate_opCdann"],
+        wRec_loss=config_file["model_hparams"]["wRec_loss"],
+        wDann_loss=config_file["model_hparams"]["wDann_loss"],
+        wSem_loss=config_file["model_hparams"]["wSem_loss"],
+        wGan_loss=config_file["model_hparams"]["wGan_loss"],
+        wTeach_loss=config_file["model_hparams"]["wTeach_loss"],
+        use_gpu=config_file["model_hparams"]["use_gpu"]
+    )
 
-    config.dropout_rate_eshared = config_file["model_hparams"]["dropout_rate_eshared"]
-    config.dropout_rate_cdann = config_file["model_hparams"]["dropout_rate_cdann"]
-    config.num_epochs = config_file["model_hparams"]["num_epochs"]
-    config.learning_rate_opTotal = config_file["model_hparams"]["learning_rate_opTotal"]
-    config.learning_rate_opDisc = config_file["model_hparams"]["learning_rate_opDisc"]
-    config.learning_rate_denoiser = config_file["model_hparams"]["learning_rate_denoiser"]
-    config.learning_rate_opCdann = config_file["model_hparams"]["learning_rate_opCdann"]
-    config.wRec_loss = config_file["model_hparams"]["wRec_loss"]
-    config.wDann_loss = config_file["model_hparams"]["wDann_loss"]
-    config.wSem_loss = config_file["model_hparams"]["wSem_loss"]
-    config.wGan_loss = config_file["model_hparams"]["wGan_loss"]
-    config.wTeach_loss = config_file["model_hparams"]["wTeach_loss"]
-    config.use_gpu = config_file["model_hparams"]["use_gpu"]
+    if not use_wandb:
+        config = type("configuration", (object,), config)
 
     return config
 
