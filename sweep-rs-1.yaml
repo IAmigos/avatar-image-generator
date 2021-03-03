@@ -1,10 +1,4 @@
 program: train.py
-command:
-  - ${env}
-  - python3
-  - ${program}
-  - "--wandb"
-  - ${args}
 method: random
 metric:
   name: loss_total
@@ -30,3 +24,9 @@ early_terminate:
   type: hyperband
   min_iter: 10
   eta: 2
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - "--wandb"
+  - ${args}
