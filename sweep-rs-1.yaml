@@ -1,3 +1,4 @@
+project: avatar-image-generator
 program: train.py
 method: random
 metric:
