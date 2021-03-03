@@ -22,7 +22,7 @@ def train(config_file, use_wandb=True):
 
 
 if __name__ == '__main__':
-    args = parse_arguments()
+    #args = parse_arguments()
     use_wandb = args.wandb
 
-    train(CONFIG_FILENAME, use_wandb)
+    train(CONFIG_FILENAME, use_wandb=True)

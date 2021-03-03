@@ -29,5 +29,4 @@ command:
   - ${env}
   - python3
   - ${program}
-  - "--wandb"
   - ${args}
