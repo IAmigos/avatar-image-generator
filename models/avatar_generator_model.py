@@ -401,11 +401,14 @@ class Avatar_Generator_Model():
             print("Training in CPU")
 
         if self.config.save_weights:
-            path_save_weights = self.config.root_path + self.config.save_path
-        try:
-            os.mkdir(path_save_weights)
-        except OSError:
-            pass
+            if self.use_wandb:
+                path_save_weights = self.config.root_path + wandb.run.id + "_" + self.config.save_path
+            else:
+                path_save_weights = self.config.root_path + self.config.save_path
+            try:
+                os.mkdir(path_save_weights)
+            except OSError:
+                pass
 
         model = (self.e1, self.e2, self.d1, self.d2, self.e_shared, self.d_shared, self.c_dann, self.discriminator1, self.denoiser)
 
