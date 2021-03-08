@@ -47,7 +47,7 @@ def set_seed(seed):
 
 def parse_arguments():
     ap = argparse.ArgumentParser()
-    ap.add_argument('-w', '--wandb', default=True, action='store_true',
+    ap.add_argument('-w', '--wandb', default=False, action='store_true',
                     help="use weights and biases")
     ap.add_argument('-nw  ', '--no-wandb', dest='wandb', action='store_false',
                     help="not use weights and biases")
