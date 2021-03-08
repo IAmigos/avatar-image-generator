@@ -14,13 +14,13 @@
 		  "batch_size":32
 	   },
 	   "save_weights":true,
-	   "num_backups":12,
+	   "num_backups":8,
 	   "save_path":"weights_trained/"
 	},
 	"model_hparams":{
 	   "dropout_rate_eshared":0.5,
 	   "dropout_rate_cdann":0.5,
-	   "num_epochs":600,
+	   "num_epochs":400,
 	   "learning_rate_opTotal":1e-4,
 	   "learning_rate_opDisc":1e-3,
 	   "learning_rate_denoiser":1e-3,
