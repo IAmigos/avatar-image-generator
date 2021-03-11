@@ -6,7 +6,6 @@ import torch.nn.functional as F
 class Dshared(nn.Module):
     def __init__(self):
         super(Dshared, self).__init__()
-        #c = capacity
         self.deconv1 = nn.ConvTranspose2d(
             in_channels=1024, out_channels=512, kernel_size=4, stride=2, bias=False)
         self.bd1 = nn.BatchNorm2d(512)

@@ -239,7 +239,7 @@ class Avatar_Generator_Model():
         for _ in range(crit_repeats):
             ### Update critic ###
             crit_opt.zero_grad()
-            crit_fake_pred = self.c_dann(faces_encoder)  # bs, 1024
+            crit_fake_pred = self.c_dann(faces_encoder) 
             crit_real_pred = self.c_dann(cartoons_encoder)
 
             epsilon = torch.rand(len(cartoons_encoder), 1,

@@ -104,7 +104,6 @@ if __name__ == "__main__":
     config = configure_model(CONFIG_FILENAME,use_wandb=use_wandb)
     DOWNLOAD_DIRECTORY = config.download_directory
 
-    #MODEL = Avatar_Generator_Model(config.model_path, config.device)
     MODEL = Avatar_Generator_Model(config, use_wandb=use_wandb)
     MODEL.load_weights(config.model_path)
 

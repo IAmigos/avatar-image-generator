@@ -51,6 +51,10 @@ def parse_arguments():
                     help="use weights and biases")
     ap.add_argument('-nw  ', '--no-wandb', dest='wandb', action='store_false',
                     help="not use weights and biases")
+    ap.add_argument('-n', '--run_name', required=False, type=str, default=None,
+                    help="name of the execution to save in wandb")
+    ap.add_argument('-nt', '--run_notes', required=False, type=str, default=None,
+                    help="notes of the execution to save in wandb")
 
     args = ap.parse_args()
 
@@ -185,8 +189,6 @@ def get_datasets(root_path, dataset_path_faces, dataset_path_cartoons, batch_siz
     path_faces = root_path + dataset_path_faces
     path_cartoons = root_path + dataset_path_cartoons
 
-    #stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
-
     transform_list_faces = get_transforms_config_face()
     transform_list_cartoons = get_transforms_config_cartoon()
 
@@ -256,7 +258,6 @@ def remove_background_image(model, path_filename, output_path):
 
 
 def remove_background(model, path_test_faces, path_segmented_faces):
-    #model = pspnet_101_voc12()
 
     path = path_test_faces + 'data/'
     output_path = path_segmented_faces + 'data/'
@@ -276,7 +277,6 @@ def get_test_images(model, batch_size, path_test_faces, path_segmented_faces):
 
     path_test_images = path_segmented_faces
 
-    #stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
     transform_list_faces = get_transforms_config_face()
     transform_list_faces += [transforms.CenterCrop(IMAGE_SIZE)]
 
@@ -297,8 +297,7 @@ def get_test_images(model, batch_size, path_test_faces, path_segmented_faces):
 
 
 def denorm(img_tensors):
-    #stats = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
-
+    
     return img_tensors * STATS[1][0] + STATS[0][0]
 
 

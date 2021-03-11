@@ -19,7 +19,7 @@ This is an image-to-image translation problem, which involves many classic compu
 
   Cartoon dataset: we use the CartoonSet dataset from Google (https://google.github.io/cartoonset/), both the versions of 10000 and 100000 items.
   
-  We filtered out the data just to keep realistic cartoons and faces images. To download the dataset:
+  We filtered out the data just to keep realistic cartoons and faces images. This code is in `scripts`. To download the dataset:
   
   1. `pip3 install gdown`
   2. `gdown https://drive.google.com/uc?id=1tfMW5vZ0aUFnl-fSYpWexoGRKGSQsStL`
@@ -27,33 +27,13 @@ This is an image-to-image translation problem, which involves many classic compu
 
 ## Directory structure
 
-  config.json: contains the model configuration to train the model and deploy the app
+  `config.json`: contains the model configuration to train the model and deploy the app
   
-  weights: contains weights that we saved the last time we train the model. 
+  `weights`: contains weights that we saved the last time we train the model. 
 
 ```
 ├── app.py
 ├── avatar-image-generator-app
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── public
-│   └── src
-│       ├── App.js
-│       ├── App.test.js
-│       ├── components
-│       │   └── imageCropCartoon.js
-│       ├── config
-│       │   └── index.js
-│       ├── css
-│       │   ├── App.css
-│       │   └── index.css
-│       ├── images
-│       │   └── logo.svg
-│       ├── index.js
-│       ├── reportWebVitals.js
-│       ├── services
-│       │   └── cartoon-service.js
-│       └── setupTests.js
 ├── config.json
 ├── Dockerfile
 ├── images
@@ -63,21 +43,23 @@ This is an image-to-image translation problem, which involves many classic compu
 ├── losses
 │   └── __init__.py
 ├── models
+│   ├── avatar_generator_model.py
+│   ├── cdann.py
+│   ├── decoder.py
+│   ├── denoiser.py
+│   ├── discriminator.py
+│   ├── encoder.py
 │   └── __init__.py
-├── notebooks
-│   ├── avatar_model_testing.ipynb
-│   └── face_segmentation.ipynb
-├── preprocessing
-│   ├── copyFiles.sh
-│   ├── keepFiles.sh
-│   └── preprocessing_cartoon_data.ipynb
 ├── README.md
 ├── requirements.txt
 ├── scripts
+│   ├── copyFiles.sh
 │   ├── download_faces.py
-│   └── plot_utils.py
+│   ├── keepFiles.sh
+│   ├── plot_utils.py
+│   └── preprocessing_cartoon_data.ipynb
+├── sweep-rs-1.yaml
 ├── train.py
-├── treedirectory.txt
 ├── utils
 │   └── __init__.py
 └── weights
@@ -91,7 +73,6 @@ This is an image-to-image translation problem, which involves many classic compu
     ├── e2.pth
     └── e_shared.pth
 
-16 directories, 51 files
 ```
 ## The model
 Our codebase is in Python3. We suggest creating a new virtual environment.
@@ -100,11 +81,12 @@ Our codebase is in Python3. We suggest creating a new virtual environment.
 
    It is based on the XGAN paper omitting the Teacher Loss and adding an autoencoder in the end. The latter was trained to learn well only the representation of the cartoons as to "denoise" the spots and wrong colorisation from the face-to-cartoon outputs of the XGAN.
 
-   The model was trained using the hyperparameters located in config.json. Weights & Biases Sweep was used to find the best hyperparameters:
+   The model was trained using the hyperparameters located in `config.json`. Weights & Biases Sweep was used to find the best hyperparameters:
 
 1. Change `root_path` in `config json`. It specifies where is `datasets` which contains the datasets. 
 2. Run `wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911` to use wandb to get the report
-3. Run `python3 train.py --wandb` or `python3 train.py --no-wandb`
+3. Run `python3 train.py --wandb --run_name <RUN_NAME> --run_notes <RUN_NOTES>` or `python3 train.py --no-wandb`
+4. To launch an agent with a sweep configuration of wandb in bg from ssh `nohup wandb agent --count <RUN_NUMBERS> stevramos/avatar_image_generator/<SWEEP_ID> &`
 
   You can see the Weights & Biases report here: https://wandb.ai/stevramos/avatar_image_generator
   
@@ -118,11 +100,11 @@ Our codebase is in Python3. We suggest creating a new virtual environment.
 
       a. Create the folder: `mkdir weights_trained` 
    
-      b. Change the path from which mount the volume. This is for both `weights_trained` and `datasets`. In this case:
+      b. Change the absolute path from which mount the volume. This is for both `weights_trained` and `datasets`. In this case:
    
-         sudo docker run -v /home/stevramos/Documents/personal_projects/xgan/avatar-image-generator/weights_trained/:/src/weights_trained/ -v /home/stevramos/Documents/personal_projects/xgan/avatar-image-generator/datasets/:/src/datasets/ -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911 && python train.py --wandb"
+         sudo docker run -v <WEIGHTS_TRAINED>:/src/weights_trained/ -v <DATASETS>:/src/datasets/ -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && wandb login 17d2772d85cbda79162bd975e45fdfbf3bb18911 && python train.py --wandb --run_name <RUN_NAME> --run_notes <RUN_NOTES>"
 
-   * Run the app locally as a daemon in docker. `model_path` in `config.json` contains the weights to use in deployment
+   * Run the app locally as a daemon in docker. `model_path` in `config.json` contains the weights to use in the app
         `sudo docker run -d -p 8000:9999 -ti avatar-image-generator /bin/bash -c "cd src/ && source activate ml && python app.py"`
    
       a. Local server: [http://0.0.0.0:8000/](http://0.0.0.0:8000/)

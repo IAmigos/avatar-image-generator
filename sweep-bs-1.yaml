@@ -1,0 +1,28 @@
+command:
+- ${env}
+- python3
+- ${program}
+- ${args}
+early_terminate:
+  eta: 2
+  min_iter: 10
+  type: hyperband
+method: bayes
+metric:
+  goal: minimize
+  name: loss_total
+parameters:
+  wDann_loss:
+    distribution: uniform
+    max: 1
+    min: 0.5
+  wGan_loss:
+    distribution: uniform
+    max: 1
+    min: 0.5
+  wSem_loss:
+    distribution: uniform
+    max: 1
+    min: 0.5
+program: train.py
+project: avatar-image-generator
