@@ -57,8 +57,10 @@ This is an image-to-image translation problem, which involves many classic compu
 │   ├── download_faces.py
 │   ├── keepFiles.sh
 │   ├── plot_utils.py
-│   └── preprocessing_cartoon_data.ipynb
-├── sweep-rs-1.yaml
+│   └── preprocessing_cartoons_data.py
+├── sweeps
+│   ├── sweep-bs-1.yaml
+│   └── sweep-rs-1.yaml
 ├── train.py
 ├── utils
 │   └── __init__.py
@@ -72,7 +74,6 @@ This is an image-to-image translation problem, which involves many classic compu
     ├── e1.pth
     ├── e2.pth
     └── e_shared.pth
-
 ```
 ## The model
 Our codebase is in Python3. We suggest creating a new virtual environment.
