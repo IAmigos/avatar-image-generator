@@ -5,7 +5,7 @@ from flask import Flask
 from flask import request
 from flask import Flask, render_template, Response, request, redirect, jsonify, send_from_directory, abort, send_file
 from flask_cors import CORS
-from models import *
+from models import Avatar_Generator_Model
 from utils import *
 import torch.nn as nn
 from PIL import Image
