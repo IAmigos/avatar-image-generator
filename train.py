@@ -1,7 +1,6 @@
 import argparse
 from utils import parse_arguments, set_seed, configure_model
 from models import Avatar_Generator_Model
-
 import os
 import sys
 import wandb
