@@ -7,7 +7,7 @@ Pillow==7.1.0
 flask_cors==3.0.10
 opencv-python==4.5.1.48
 keras-segmentation==0.3.0
-tensorflow==2.4.0 
+tensorflow==2.5.0 
 wandb==0.10.12
 tqdm==4.55.1
 helper==2.4.2
