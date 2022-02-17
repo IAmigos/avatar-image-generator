@@ -14,6 +14,7 @@ from .decoder import *
 from .discriminator import *
 from .denoiser import *
 from .cdann import *
+from .inception import *
 from utils import *
 from losses import *
 
@@ -37,9 +38,9 @@ class Avatar_Generator_Model():
         self.use_wandb = use_wandb
         self.config = config
         self.device = torch.device("cuda:" + (os.getenv('N_CUDA')if os.getenv('N_CUDA') else "0") if self.config.use_gpu and torch.cuda.is_available() else "cpu")
-        
+        self.mmd_kernel_type = "multiscale"
         self.segmentation = pspnet_101_voc12()
-        self.e1, self.e2, self.d1, self.d2, self.e_shared, self.d_shared, self.c_dann, self.discriminator1, self.denoiser = self.init_model(self.device, self.config.dropout_rate_eshared, self.use_wandb)
+        self.e1, self.e2, self.d1, self.d2, self.e_shared, self.d_shared, self.c_dann, self.discriminator1, self.denoiser, self.inception = self.init_model(self.device, self.config.dropout_rate_eshared, self.use_wandb)
         
 
     def init_model(self, device, dropout_rate_eshared, use_wandb=True):
@@ -54,7 +55,8 @@ class Avatar_Generator_Model():
         c_dann = Critic()
         discriminator1 = Discriminator()
         denoiser = Denoiser()
-
+        inception = Inception([Inception.BLOCK_INDEX_BY_DIM[2048]]) #fid
+        
         e1.to(device)
         e2.to(device)
         e_shared.to(device)
@@ -64,6 +66,7 @@ class Avatar_Generator_Model():
         c_dann.to(device)
         discriminator1.to(device)
         denoiser = denoiser.to(device)
+        inception = inception.to(device)
 
         if use_wandb:
             wandb.watch(e1, log="all")
@@ -75,8 +78,9 @@ class Avatar_Generator_Model():
             wandb.watch(c_dann, log="all")
             wandb.watch(discriminator1, log="all")
             wandb.watch(denoiser, log="all")
+            wandb.watch(inception, log="all")
 
-        return (e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser)
+        return (e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser, inception)
 
 
     def generate(self, path_filename, output_path):
@@ -174,8 +178,11 @@ class Avatar_Generator_Model():
         self.c_dann.eval()
         self.discriminator1.eval()
         self.denoiser.eval()
+        self.inception.eval()
 
         loss_test = []
+        cartoons_batch_test = []
+        cartoons_construct_test = []
 
         with torch.no_grad():
             for faces_batch, cartoons_batch in zip(cycle(test_loader_faces), test_loader_cartoons):
@@ -228,9 +235,19 @@ class Avatar_Generator_Model():
                     loss_gen1 + self.config.wTeach_loss*loss_teach
 
                 loss_test.append(loss_total.item())
-            
 
-        return np.mean(loss_test)
+                cartoons_batch_test.append(cartoons_batch)
+                cartoons_construct_test.append(cartoons_construct)
+
+        cartoons_batch_test = torch.cat(cartoons_batch_test)
+        cartoons_construct_test = torch.cat(cartoons_construct_test)
+        cartoons_batch_feature_view = cartoons_batch_test.view(cartoons_batch_test.size()[0], -1)
+        cartoons_construct_feature_view = cartoons_construct_test.view(cartoons_construct_test.size()[0], -1)
+        
+        fid_test = fid(cartoons_batch, cartoons_construct, self.inception, self.device)
+        mmd_test = MMD(cartoons_batch_feature_view, cartoons_construct_feature_view, self.mmd_kernel_type, self.device)
+        
+        return np.mean(loss_test), fid_test, mmd_test
 
 
     def train_crit_repeats(self, crit_opt, faces_encoder, cartoons_encoder, crit_repeats=5):
@@ -449,10 +466,12 @@ class Avatar_Generator_Model():
                 except OSError:
                     pass
                 save_weights(model, path_save_epoch, self.use_wandb)
-                loss_test = self.get_loss_test_set(test_loader_faces, test_loader_cartoons, criterion_bc, criterion_l1, criterion_l2)
+                loss_test, fid_test, mmd_test = self.get_loss_test_set(test_loader_faces, test_loader_cartoons, criterion_bc, criterion_l1, criterion_l2)
                 generated_images = test_image(model, self.device, images_faces_to_test)
                 
                 metrics_log["loss_total_test"] = loss_test
+                metrics_log["fid_last_batch_test"] = fid_test
+                metrics_log["mmd_last_batch_test"] = mmd_test
                 metrics_log["Generated images"] = [wandb.Image(img) for img in generated_images]
 
             if self.use_wandb:
