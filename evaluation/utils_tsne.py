@@ -4,6 +4,7 @@ from sklearn.decomposition import PCA
 from MulticoreTSNE import MulticoreTSNE as TSNE
 import matplotlib.pyplot as plt
 import seaborn as sns
+import wandb
 
 def apply_tsne(df_feature_vector_info, feature_vectors, perplexity, n_iter, learning_rate=200, pca_components=None, tsne_jobs=4):
     if pca_components:
@@ -25,4 +26,7 @@ def generate_scatter(tsne_results, df_feature_vector_info, save_image, output_di
         sns.scatterplot(x=tsne_results[:,0], y=tsne_results[:,1], hue=df_feature_vector_info['name'], legend="full", alpha=0.8)
         plt.savefig(os.path.join(output_dir, f"models_scatter.png"))
     if save_wandb:
-        pass
+        data = [[x,y, name] for (x, y, name) in zip(list(tsne_results[:,0]), list(tsne_results[:,1]), list(df_feature_vector_info['name']))]
+        table = wandb.Table(data=data, columns = ["tsne_x", "tsne_y",'name'])
+        return wandb.plot.scatter(table, "tsne_x", "tsne_y", title="t-SNE evaluation")
+#         wandb.log({"tsne evaluation" : wandb.plot.scatter(table, "tsne_x", "tsne_y", title="t-SNE evaluation")})

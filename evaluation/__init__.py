@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from utils_tsne import apply_tsne, generate_scatter
+from .utils_tsne import apply_tsne, generate_scatter
 
 def tsne_evaluation(ls_feature_arrays, ls_array_names, pca_components=None, perplexity=30, n_iter=1000, save_image=False, output_dir='./', save_wandb=False):
     assert len(ls_feature_arrays) == len(ls_array_names)
@@ -18,10 +18,12 @@ def tsne_evaluation(ls_feature_arrays, ls_array_names, pca_components=None, perp
     
     tsne_results_norm =  StandardScaler().fit_transform(tsne_results)
     
-    if save_image or wandb:
-        scatter_img = generate_scatter(tsne_results_norm, df_feature_vector_info, save_image, output_dir, save_wandb)
+    scatter_plot = None
+    if save_image or save_wandb:
+        scatter_plot = generate_scatter(tsne_results_norm, df_feature_vector_info, save_image, output_dir, save_wandb)
+        
    
-    return tsne_results_norm, df_feature_vector_info
+    return tsne_results_norm, df_feature_vector_info, scatter_plot
 
     ###############################
     
