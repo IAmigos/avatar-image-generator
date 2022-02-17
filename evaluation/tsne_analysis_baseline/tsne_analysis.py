@@ -8,6 +8,8 @@ from tsne_evaluation_utils.metric import calc_jaccard_index, calc_rmse
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Code as in https://github.com/vfcosta/gen-tsne
+
 def calculate(paths, output_dir, enable_rmse=True, pca_components=None, frow=60, fcol=60, perplexity=30,
               n_iter=1000, save_data=True, use_features=False):
     df, image_shape = build_grid(paths, pca_components=pca_components, frow=frow, fcol=fcol, perplexity=perplexity,

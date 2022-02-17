@@ -113,8 +113,12 @@ def load_data(paths, use_features):
             df_new["name"] = name
             df_new["file"] = f
             df = df.append(df_new)
+#         with open(os.path.basename(path).split('/')[-1]+'.npy', 'wb') as f:
+#             np.save(f, all_features)
+#             all_features = []
     logger.info("loaded %d images with shape %s", len(df), image_shape)
     tsne_input = np.array(all_features) if use_features else get_image_data(df, image_shape)
+    
     return df.reset_index(), image_shape, tsne_input
 
 

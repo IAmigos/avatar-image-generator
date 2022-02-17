@@ -1,0 +1,1 @@
+python tsne_analysis.py -b test/assets/dataset -p test/assets/model_a -p test/assets/model_b -o tsne_output -f
