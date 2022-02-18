@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 
 from .utils_tsne import apply_tsne, generate_scatter
 
-def tsne_evaluation(ls_feature_arrays, ls_array_names, pca_components=None, perplexity=30, n_iter=1000, save_image=False, output_dir='./', save_wandb=False):
+def tsne_evaluation(ls_feature_arrays, ls_array_names, pca_components=None, perplexity=30, n_iter=1000, save_image=False, output_dir='./', save_wandb=False, plot_title='t-SNE evaluation'):
     assert len(ls_feature_arrays) == len(ls_array_names)
     
     feature_vectors = np.concatenate(ls_feature_arrays)
@@ -20,10 +20,10 @@ def tsne_evaluation(ls_feature_arrays, ls_array_names, pca_components=None, perp
     
     scatter_plot = None
     if save_image or save_wandb:
-        scatter_plot = generate_scatter(tsne_results_norm, df_feature_vector_info, save_image, output_dir, save_wandb)
+        wandb_scatter_plot = generate_scatter(tsne_results_norm, df_feature_vector_info, save_image, output_dir, save_wandb, plot_title)
         
    
-    return tsne_results_norm, df_feature_vector_info, scatter_plot
+    return tsne_results_norm, df_feature_vector_info, wandb_scatter_plot
 
     ###############################
     
