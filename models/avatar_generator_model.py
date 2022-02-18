@@ -17,6 +17,7 @@ from .cdann import *
 from .inception import *
 from utils import *
 from losses import *
+from evaluation import tsne_evaluation
 
 import wandb
 import os
@@ -184,6 +185,11 @@ class Avatar_Generator_Model():
         cartoons_batch_test = []
         cartoons_construct_test = []
 
+        
+        faces_encoder_test = []
+        cartoons_encoder_test = []
+        cartoons_construct_encoder_test = []
+        
         with torch.no_grad():
             for faces_batch, cartoons_batch in zip(cycle(test_loader_faces), test_loader_cartoons):
                 
@@ -235,9 +241,16 @@ class Avatar_Generator_Model():
                     loss_gen1 + self.config.wTeach_loss*loss_teach
 
                 loss_test.append(loss_total.item())
-
+                
                 cartoons_batch_test.append(cartoons_batch)
                 cartoons_construct_test.append(cartoons_construct)
+                
+                faces_encoder_test.append(faces_encoder)
+                cartoons_encoder_test.append(cartoons_encoder)
+                cartoons_construct_encoder_test.append(cartoons_construct_encoder)
+            
+
+#         return np.mean(loss_test)
 
         cartoons_batch_test = torch.cat(cartoons_batch_test)
         cartoons_construct_test = torch.cat(cartoons_construct_test)
@@ -246,8 +259,20 @@ class Avatar_Generator_Model():
         
         fid_test = fid(cartoons_batch, cartoons_construct, self.inception, self.device)
         mmd_test = MMD(cartoons_batch_feature_view, cartoons_construct_feature_view, self.mmd_kernel_type, self.device)
+
+        # tsne analysis
+        faces_encoder_test = torch.cat(faces_encoder_test).cpu()
+        cartoons_encoder_test = torch.cat(cartoons_encoder_test).cpu()
+        cartoons_construct_encoder_test = torch.cat(cartoons_construct_encoder_test).cpu()
         
-        return np.mean(loss_test), fid_test, mmd_test
+        # tsne of faces encoder and cartoons encoder      
+        tsne_results_norm, df_feature_vector_info, wandb_scatter_plot1 = tsne_evaluation([faces_encoder_test, cartoons_encoder_test], ['faces encoder', 'cartoons encoder'], pca_components=None, perplexity=30, n_iter=1000, save_image=False, save_wandb=True, plot_title='t-SNE evaluation - FE and CE')
+        
+        # tsne of faces encoder and cartoons construct encoder 
+        tsne_results_norm, df_feature_vector_info, wandb_scatter_plot2 = tsne_evaluation([faces_encoder_test, cartoons_construct_encoder_test], ['faces encoder', 'cartoons encoder'], pca_components=None, perplexity=30, n_iter=1000, save_image=False, save_wandb=True, plot_title='t-SNE evaluation - FE and CCE')
+        
+        return np.mean(loss_test), fid_test, mmd_test,  wandb_scatter_plot1, wandb_scatter_plot2
+        
 
 
     def train_crit_repeats(self, crit_opt, faces_encoder, cartoons_encoder, crit_repeats=5):
@@ -406,6 +431,9 @@ class Avatar_Generator_Model():
             loss_denoiser.backward()
 
             optimizerDenoiser.step()
+            
+            # break #Delete break
+            
 
         return loss_rec1, loss_rec2, loss_dann, loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach, loss_disc1_real_cartoons, loss_disc1_fake_cartoons
 
@@ -466,13 +494,15 @@ class Avatar_Generator_Model():
                 except OSError:
                     pass
                 save_weights(model, path_save_epoch, self.use_wandb)
-                loss_test, fid_test, mmd_test = self.get_loss_test_set(test_loader_faces, test_loader_cartoons, criterion_bc, criterion_l1, criterion_l2)
+                loss_test, fid_test, mmd_test, wandb_scatter_plot1, wandb_scatter_plot2 = self.get_loss_test_set(test_loader_faces, test_loader_cartoons, criterion_bc, criterion_l1, criterion_l2)
                 generated_images = test_image(model, self.device, images_faces_to_test)
                 
                 metrics_log["loss_total_test"] = loss_test
                 metrics_log["fid_last_batch_test"] = fid_test
                 metrics_log["mmd_last_batch_test"] = mmd_test
                 metrics_log["Generated images"] = [wandb.Image(img) for img in generated_images]
+                metrics_log['tsne evaluation plot 1'] = wandb_scatter_plot1
+                metrics_log['tsne evaluation plot 2'] = wandb_scatter_plot2
 
             if self.use_wandb:
                 wandb.log(metrics_log)
