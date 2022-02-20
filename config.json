@@ -14,21 +14,24 @@
 		  "batch_size":32
 	   },
 	   "save_weights":true,
-	   "num_backups":8,
+	   "num_backups":12,
 	   "save_path":"weights_trained/"
 	},
 	"model_hparams":{
 	   "dropout_rate_eshared":0.5,
-	   "dropout_rate_cdann":0.5,
-	   "num_epochs":400,
+	   "use_critic_dann": true,
+	   "use_critic_disc": true,
+	   "use_spectral_norm": true,
+	   "use_denoiser": true,
+	   "num_epochs":600,
 	   "learning_rate_opTotal":1e-4,
 	   "learning_rate_opDisc":1e-3,
 	   "learning_rate_denoiser":1e-3,
 	   "learning_rate_opCdann":2e-4,
-	   "wRec_loss":1.0,
-	   "wDann_loss":1.0,
-	   "wSem_loss":0.5,
-	   "wGan_loss":1,
+	   "wRec_loss":0.9928583013837265,
+	   "wDann_loss":0.9252047602915646,
+	   "wSem_loss":0.44957120675107437,
+	   "wGan_loss":0.9790275245543392,
 	   "wTeach_loss":0.75,
 	   "use_gpu":true
 	}

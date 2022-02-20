@@ -7,13 +7,14 @@ import wandb
 
 CONFIG_FILENAME = "config.json"
 PROJECT_WANDB = "avatar_image_generator"
+ENTITY = "iamigos"
 
 def train(config_file, use_wandb, run_name, run_notes):
     set_seed(32)
     config = configure_model(config_file, use_wandb)
     
     if use_wandb:
-        wandb.init(project=PROJECT_WANDB, config=config, name=run_name, notes=run_notes)
+        wandb.init(project=PROJECT_WANDB, entity=ENTITY, config=config, name=run_name, notes=run_notes)
         config = wandb.config
         wandb.watch_called = False
     

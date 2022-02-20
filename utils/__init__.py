@@ -115,7 +115,10 @@ def configure_model(config_file, use_wandb):
         save_path=config_file["train_dataset_params"]["save_path"],
 
         dropout_rate_eshared=config_file["model_hparams"]["dropout_rate_eshared"],
-        dropout_rate_cdann=config_file["model_hparams"]["dropout_rate_cdann"],
+        use_critic_dann=config_file["model_hparams"]["use_critic_dann"],
+        use_critic_disc=config_file["model_hparams"]["use_critic_disc"],
+        use_spectral_norm=config_file["model_hparams"]["use_spectral_norm"],
+        use_denoiser=config_file["model_hparams"]["use_denoiser"],
         num_epochs=config_file["model_hparams"]["num_epochs"],
         learning_rate_opTotal=config_file["model_hparams"]["learning_rate_opTotal"],
         learning_rate_opDisc=config_file["model_hparams"]["learning_rate_opDisc"],
@@ -334,23 +337,21 @@ def init_optimizers(model, learning_rate_opDisc, learning_rate_opTotal, learning
 
     e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
 
-    listDisc1 = list(discriminator1.parameters())
     optimizerDisc1 = torch.optim.Adam(
-        listDisc1, lr=learning_rate_opDisc, betas=(0.5, 0.999))
+        discriminator1.parameters(), lr=learning_rate_opDisc, betas=(0.5, 0.999))
 
     #listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + list(d_shared.parameters()) + list(d1.parameters()) + list(d2.parameters()) + list(c_dann.parameters())
     listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + \
-        list(d_shared.parameters()) + \
-        list(d1.parameters()) + list(d2.parameters())
+                    list(d_shared.parameters()) + list(d1.parameters()) + list(d2.parameters())
     optimizerTotal = torch.optim.Adam(
         listParameters, lr=learning_rate_opTotal, betas=(0.5, 0.999))
 
     optimizerDenoiser = torch.optim.Adam(
         denoiser.parameters(), lr=learning_rate_denoiser)
 
-    crit_opt = torch.optim.Adam(
+    optimizerCdann = torch.optim.Adam(
         c_dann.parameters(), lr=learning_rate_opCdann, betas=(0.5, 0.999))
 
-    return (optimizerDenoiser, optimizerDisc1, optimizerTotal, crit_opt)
+    return (optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann)
 
 

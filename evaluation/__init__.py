@@ -19,6 +19,8 @@ def tsne_evaluation(ls_feature_arrays, ls_array_names, pca_components=None, perp
     tsne_results_norm =  StandardScaler().fit_transform(tsne_results)
     
     scatter_plot = None
+    wandb_scatter_plot = None
+    img_scatter_plot = None
     if save_image or save_wandb:
         wandb_scatter_plot, img_scatter_plot = generate_scatter(tsne_results_norm, df_feature_vector_info, save_image, output_dir, save_wandb, plot_title)
         
