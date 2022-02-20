@@ -532,7 +532,7 @@ class Avatar_Generator_Model():
                     pass
                 save_weights(model, path_save_epoch, self.use_wandb)
                 loss_test, fid_test, mmd_test, wandb_scatter_plot_1_fe_ce, wandb_scatter_plot_2_fe_cce, img_scatter_plot_1_fe_ce, img_scatter_plot_2_fe_cce = self.get_loss_test_set(test_loader_faces, test_loader_cartoons, criterion_bc)
-                generated_images = test_image(model, self.device, images_faces_to_test)
+                generated_images = test_image(model, self.device, images_faces_to_test, self.config.use_denoiser)
                 
                 metrics_log["loss_total_test"] = loss_test
                 metrics_log["fid_last_batch_test"] = fid_test

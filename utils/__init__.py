@@ -304,7 +304,7 @@ def denorm(img_tensors):
     return img_tensors * STATS[1][0] + STATS[0][0]
 
 
-def test_image(model, device, images_faces):
+def test_image(model, device, images_faces, use_denoiser):
 
     e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
 
@@ -323,7 +323,8 @@ def test_image(model, device, images_faces):
         output = e_shared(output)
         output = d_shared(output)
         output = d2(output)
-        output = denoiser(output)
+        if use_denoiser:
+            output = denoiser(output)
 
     output = denorm(output)
 
