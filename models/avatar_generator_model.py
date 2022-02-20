@@ -477,7 +477,7 @@ class Avatar_Generator_Model():
             else:
                 loss_denoiser = torch.Tensor([0]).requires_grad_()
             
-            break #Delete break
+            #break #Delete break
             
 
         return loss_rec1, loss_rec2, loss_dann, loss_sem1, loss_sem2, loss_disc1, loss_gen1, loss_total, loss_denoiser, loss_teach
