@@ -15,10 +15,10 @@ def L1_norm(encoder,encoder_rec):
   
   return torch.linalg.norm(encoder.reshape(encoder.shape[0], -1) - encoder_rec.reshape(encoder_rec.shape[0], -1), ord=1, dim=1).mean()
 
-def fid(real_img,fake_img,model, device):
+def fid(real_img,fake_img):
   #Code obtained from: https://www.kaggle.com/ibtesama/gan-in-pytorch-with-fid
-  mu_1,std_1=calc_eval_stats(real_img,model,device=device)
-  mu_2,std_2=calc_eval_stats(fake_img,model,device=device)
+  mu_1,std_1=calc_eval_stats(real_img)
+  mu_2,std_2=calc_eval_stats(fake_img)
     
   """get fretched distance"""
   fid_value = calc_fid(mu_1, std_1, mu_2, std_2)

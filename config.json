@@ -14,7 +14,7 @@
 		  "batch_size":32
 	   },
 	   "save_weights":true,
-	   "num_backups":12,
+	   "num_backups": 8,
 	   "save_path":"weights_trained/"
 	},
 	"model_hparams":{
@@ -23,7 +23,7 @@
 	   "use_critic_disc": true,
 	   "use_spectral_norm": true,
 	   "use_denoiser": true,
-	   "num_epochs":600,
+	   "num_epochs": 200,
 	   "learning_rate_opTotal":1e-4,
 	   "learning_rate_opDisc":1e-3,
 	   "learning_rate_denoiser":1e-3,

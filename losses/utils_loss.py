@@ -45,21 +45,20 @@ def calc_fid(mu1, sigma1, mu2, sigma2, eps=1e-6):
     return (diff.dot(diff) + np.trace(sigma1) +
             np.trace(sigma2) - 2 * tr_covmean)
 
-def calc_eval_stats(images,model,batch_size=128, dims=2048,
-                    device = "cuda"):
+def calc_eval_stats(act):
     ##Code obtained from: https://www.kaggle.com/ibtesama/gan-in-pytorch-with-fid
-    model.eval()
-    act=np.empty((len(images), dims))
-    batch=images.to(device)
+    #model.eval()
+    #act=np.empty((len(images), dims))
+    #batch=images.to(device)
     
-    pred = model(batch)[0]
+    #pred = model(batch)[0]
 
     # If model output is not scalar, apply global spatial average pooling.
     # This happens if you choose a dimensionality not equal 2048.
-    if pred.size(2) != 1 or pred.size(3) != 1:
-        pred = F.adaptive_avg_pool2d(pred, output_size=(1, 1))
+    #if pred.size(2) != 1 or pred.size(3) != 1:
+     #   pred = F.adaptive_avg_pool2d(pred, output_size=(1, 1))
 
-    act= pred.cpu().data.numpy().reshape(pred.size(0), -1)
+    #act= pred.cpu().data.numpy().reshape(pred.size(0), -1)
     
     mu = np.mean(act, axis=0)
     sigma = np.cov(act, rowvar=False)

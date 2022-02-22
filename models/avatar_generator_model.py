@@ -175,6 +175,22 @@ class Avatar_Generator_Model():
 
         return (torchvision.transforms.ToPILImage()(output), output)
 
+
+    def get_feature_inception(self, images, dims=2048):
+        self.inception = self.inception.eval()
+        act = np.empty((len(images), dims))
+        batch = images.to(self.device)
+        
+        pred = self.inception(batch)[0]
+
+        # If model output is not scalar, apply global spatial average pooling.
+        # This happens if you choose a dimensionality not equal 2048.
+        if pred.size(2) != 1 or pred.size(3) != 1:
+            pred = F.adaptive_avg_pool2d(pred, output_size=(1, 1))
+
+        act= pred.cpu().data.numpy().reshape(pred.size(0), -1)
+        return act
+
     def get_loss_test_set(self, test_loader_faces, test_loader_cartoons, criterion_bc):
         
         self.e1.eval()
@@ -196,6 +212,8 @@ class Avatar_Generator_Model():
         faces_encoder_test = []
         cartoons_encoder_test = []
         cartoons_construct_encoder_test = []
+        cartoon_inception_test = []
+        cartoons_construct_inception_test = []
         
         with torch.no_grad():
             for faces_batch, cartoons_batch in zip(cycle(test_loader_faces), test_loader_cartoons):
@@ -249,7 +267,21 @@ class Avatar_Generator_Model():
 
                 loss_test.append(loss_total.item())
                 
+                #inception
+                cartoon_inception = self.get_feature_inception(cartoons_batch)
+                cartoon_inception_test.append(cartoon_inception)
+                #inception
+
                 cartoons_batch_test.append(cartoons_batch)
+                 
+                if self.config.use_denoiser:
+                    cartoons_construct = self.denoiser(cartoons_construct)
+
+                #inception
+                cartoons_construct_inception = self.get_feature_inception(cartoons_construct)
+                cartoons_construct_inception_test.append(cartoons_construct_inception)
+                #inception
+
                 cartoons_construct_test.append(cartoons_construct)
                 
                 faces_encoder_test.append(faces_encoder)
@@ -261,22 +293,36 @@ class Avatar_Generator_Model():
 
         cartoons_batch_test = torch.cat(cartoons_batch_test)
         cartoons_construct_test = torch.cat(cartoons_construct_test)
+        cartoons_construct_test = torch.unique(cartoons_construct_test, dim=0, sorted=False)
+
+        cartoon_inception_test = np.concatenate(cartoon_inception_test)
+        cartoons_construct_inception_test = np.concatenate(cartoons_construct_inception_test)
+        cartoons_construct_inception_test = np.unique(cartoons_construct_inception_test, axis=0)
+        
         cartoons_batch_feature_view = cartoons_batch_test.view(cartoons_batch_test.size()[0], -1)
         cartoons_construct_feature_view = cartoons_construct_test.view(cartoons_construct_test.size()[0], -1)
+        cartoons_construct_feature_view = torch.unique(cartoons_construct_feature_view, dim=0, sorted=False)
+        cartoons_batch_feature_view = cartoons_batch_feature_view[:cartoons_construct_feature_view.shape[0]]
         
-        fid_test = fid(cartoons_batch, cartoons_construct, self.inception, self.device)
+        assert cartoons_construct_test.shape[0] == cartoons_construct_feature_view.shape[0], "torch unique cant get the same shape in constructed cartoons"
+
+        fid_test = fid(cartoon_inception_test, cartoons_construct_inception_test)
         mmd_test = MMD(cartoons_batch_feature_view, cartoons_construct_feature_view, self.mmd_kernel_type, self.device)
 
         # tsne analysis
         faces_encoder_test = torch.cat(faces_encoder_test).cpu()
+        faces_encoder_test = torch.unique(faces_encoder_test, dim=0, sorted=False)
         cartoons_encoder_test = torch.cat(cartoons_encoder_test).cpu()
         cartoons_construct_encoder_test = torch.cat(cartoons_construct_encoder_test).cpu()
+        cartoons_construct_encoder_test = torch.unique(cartoons_construct_encoder_test, dim=0, sorted=False)
         
+        assert faces_encoder_test.shape[0] == cartoons_construct_encoder_test.shape[0], "torch unique cant get the same shape in faces and constructed cartoons"
+
         # tsne of faces encoder and cartoons encoder      
         tsne_results_norm, df_feature_vector_info, wandb_scatter_plot_1_fe_ce, img_scatter_plot_1_fe_ce = tsne_evaluation([faces_encoder_test, cartoons_encoder_test], ['faces encoder', 'cartoons encoder'], pca_components=None, perplexity=30, n_iter=1000, save_image=False, save_wandb=self.use_wandb, plot_title='t-SNE evaluation - FE and CE')
         
         # tsne of faces encoder and cartoons construct encoder 
-        tsne_results_norm, df_feature_vector_info, wandb_scatter_plot_2_fe_cce, img_scatter_plot_2_fe_cce = tsne_evaluation([faces_encoder_test, cartoons_construct_encoder_test], ['faces encoder', 'cartoons encoder'], pca_components=None, perplexity=30, n_iter=1000, save_image=False, save_wandb=self.use_wandb, plot_title='t-SNE evaluation - FE and CCE')
+        tsne_results_norm, df_feature_vector_info, wandb_scatter_plot_2_fe_cce, img_scatter_plot_2_fe_cce = tsne_evaluation([faces_encoder_test, cartoons_construct_encoder_test], ['faces encoder', 'cartoons constructed encoder'], pca_components=None, perplexity=30, n_iter=1000, save_image=False, save_wandb=self.use_wandb, plot_title='t-SNE evaluation - FE and CCE')
         
         return np.mean(loss_test), fid_test, mmd_test, wandb_scatter_plot_1_fe_ce, wandb_scatter_plot_2_fe_cce, img_scatter_plot_1_fe_ce, img_scatter_plot_2_fe_cce
         
@@ -535,8 +581,8 @@ class Avatar_Generator_Model():
                 generated_images = test_image(model, self.device, images_faces_to_test, self.config.use_denoiser)
                 
                 metrics_log["loss_total_test"] = loss_test
-                metrics_log["fid_last_batch_test"] = fid_test
-                metrics_log["mmd_last_batch_test"] = mmd_test
+                metrics_log["fid"] = fid_test
+                metrics_log["mmd"] = mmd_test
                 metrics_log["Generated images"] = [wandb.Image(img) for img in generated_images]
                 metrics_log['t-SNE evaluation plot 1 - FE and CE'] = wandb_scatter_plot_1_fe_ce
                 metrics_log['t-SNE evaluation plot 2 - FE and CCE'] = wandb_scatter_plot_2_fe_cce
