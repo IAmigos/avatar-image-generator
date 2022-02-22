@@ -276,7 +276,7 @@ class Avatar_Generator_Model():
         tsne_results_norm, df_feature_vector_info, wandb_scatter_plot_1_fe_ce, img_scatter_plot_1_fe_ce = tsne_evaluation([faces_encoder_test, cartoons_encoder_test], ['faces encoder', 'cartoons encoder'], pca_components=None, perplexity=30, n_iter=1000, save_image=False, save_wandb=self.use_wandb, plot_title='t-SNE evaluation - FE and CE')
         
         # tsne of faces encoder and cartoons construct encoder 
-        tsne_results_norm, df_feature_vector_info, wandb_scatter_plot_2_fe_cce, img_scatter_plot_2_fe_cce = tsne_evaluation([faces_encoder_test, cartoons_construct_encoder_test], ['faces encoder', 'cartoons encoder'], pca_components=None, perplexity=30, n_iter=1000, save_image=False, save_wandb=self.use_wandb, plot_title='t-SNE evaluation - FE and CCE')
+        tsne_results_norm, df_feature_vector_info, wandb_scatter_plot_2_fe_cce, img_scatter_plot_2_fe_cce = tsne_evaluation([faces_encoder_test, cartoons_construct_encoder_test], ['faces encoder', 'cartoons construct encoder'], pca_components=None, perplexity=30, n_iter=1000, save_image=False, save_wandb=self.use_wandb, plot_title='t-SNE evaluation - FE and CCE')
         
         return np.mean(loss_test), fid_test, mmd_test, wandb_scatter_plot_1_fe_ce, wandb_scatter_plot_2_fe_cce, img_scatter_plot_1_fe_ce, img_scatter_plot_2_fe_cce
         
