@@ -363,7 +363,7 @@ class Avatar_Generator_Model():
                 model, real_sample, fake_sample, epsilon)
             gp = gradient_penalty(gradient)
             crit_loss = get_crit_loss(
-                crit_fake_pred.squeeze(), crit_real_pred.squeeze(), gp, 10) * self.config.wDann_loss
+                crit_fake_pred.squeeze(), crit_real_pred.squeeze(), gp, 10) * loss_weight
 
             # Keep track of the average critic loss in this batch
             mean_iteration_critic_loss += crit_loss / crit_repeats
@@ -435,6 +435,7 @@ class Avatar_Generator_Model():
                 label_output_cartoon = self.c_dann(cartoons_encoder)
                 loss_dann = criterion_bc(label_output_face.squeeze(), torch.zeros_like(label_output_face.squeeze(
                                         ), device=self.device)) + criterion_bc(label_output_cartoon.squeeze(), torch.ones_like(label_output_cartoon.squeeze(), device=self.device))
+                loss_dann = self.config.wDann_loss * loss_dann
                 loss_dann.backward(retain_graph=True)
                 optimizerCdann.step()
             else:
