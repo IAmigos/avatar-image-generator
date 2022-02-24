@@ -119,6 +119,7 @@ def configure_model(config_file, use_wandb):
         use_critic_disc=config_file["model_hparams"]["use_critic_disc"],
         use_spectral_norm=config_file["model_hparams"]["use_spectral_norm"],
         use_denoiser=config_file["model_hparams"]["use_denoiser"],
+        use_disc_cartoon2face=config_file["model_hparams"]["use_disc_cartoon2face"],
         num_epochs=config_file["model_hparams"]["num_epochs"],
         learning_rate_opTotal=config_file["model_hparams"]["learning_rate_opTotal"],
         learning_rate_opDisc=config_file["model_hparams"]["learning_rate_opDisc"],
@@ -149,7 +150,7 @@ def weights_init(m):
 
 
 def save_weights(model, path_sub, use_wandb=True):
-    e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
+    e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser, discriminator2 = model
 
     torch.save(e1.state_dict(), os.path.join(path_sub, 'e1.pth'))
     torch.save(e2.state_dict(), os.path.join(path_sub, 'e2.pth'))
@@ -158,9 +159,9 @@ def save_weights(model, path_sub, use_wandb=True):
     torch.save(d1.state_dict(), os.path.join(path_sub, 'd1.pth'))
     torch.save(d2.state_dict(), os.path.join(path_sub, 'd2.pth'))
     torch.save(c_dann.state_dict(), os.path.join(path_sub, 'c_dann.pth'))
-    torch.save(discriminator1.state_dict(),
-               os.path.join(path_sub, 'disc1.pth'))
+    torch.save(discriminator1.state_dict(), os.path.join(path_sub, 'disc1.pth'))
     torch.save(denoiser.state_dict(), os.path.join(path_sub, 'denoiser.pth'))
+    torch.save(discriminator2.state_dict(), os.path.join(path_sub, 'disc2.pth'))
 
     if use_wandb:
         wandb.save(os.path.join(path_sub, '*.pth'),
@@ -306,7 +307,7 @@ def denorm(img_tensors):
 
 def test_image(model, device, images_faces, use_denoiser):
 
-    e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
+    e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser, discriminator2 = model
 
     e1.eval()
     e2.eval()
@@ -316,6 +317,7 @@ def test_image(model, device, images_faces, use_denoiser):
     d2.eval()
     c_dann.eval()
     discriminator1.eval()
+    discriminator2.eval()
     denoiser.eval()
 
     with torch.no_grad():
@@ -336,10 +338,13 @@ def test_image(model, device, images_faces, use_denoiser):
 
 def init_optimizers(model, learning_rate_opDisc, learning_rate_opTotal, learning_rate_denoiser, learning_rate_opCdann):
 
-    e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser = model
+    e1, e2, d1, d2, e_shared, d_shared, c_dann, discriminator1, denoiser, discriminator2 = model
 
     optimizerDisc1 = torch.optim.Adam(
         discriminator1.parameters(), lr=learning_rate_opDisc, betas=(0.5, 0.999))
+
+    optimizerDisc2 = torch.optim.Adam(
+        discriminator2.parameters(), lr=learning_rate_opDisc, betas=(0.5, 0.999))
 
     #listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + list(d_shared.parameters()) + list(d1.parameters()) + list(d2.parameters()) + list(c_dann.parameters())
     listParameters = list(e1.parameters()) + list(e2.parameters()) + list(e_shared.parameters()) + \
@@ -353,6 +358,6 @@ def init_optimizers(model, learning_rate_opDisc, learning_rate_opTotal, learning
     optimizerCdann = torch.optim.Adam(
         c_dann.parameters(), lr=learning_rate_opCdann, betas=(0.5, 0.999))
 
-    return (optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann)
+    return (optimizerDenoiser, optimizerDisc1, optimizerTotal, optimizerCdann, optimizerDisc2)
 
 
