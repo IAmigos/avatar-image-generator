@@ -23,7 +23,7 @@
 	   "use_critic_disc": true,
 	   "use_spectral_norm": true,
 	   "use_denoiser": true,
-	   "use_disc_cartoon2face": true,
+	   "use_disc_cartoon2face": false,
 	   "num_epochs": 200,
 	   "learning_rate_opTotal":1e-4,
 	   "learning_rate_opDisc":1e-3,
@@ -32,7 +32,7 @@
 	   "wRec_loss":0.9928583013837265,
 	   "wDann_loss":0.9252047602915646,
 	   "wSem_loss":0.44957120675107437,
-	   "wGan_loss":0.9252047602915646,
+	   "wGan_loss":0.9790275245543392,
 	   "wTeach_loss":0.75,
 	   "use_gpu":true
 	}
