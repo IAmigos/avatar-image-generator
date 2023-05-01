@@ -1,4 +1,4 @@
-Flask==1.1.1
+Flask==2.3.2
 numpy==1.19.4
 matplotlib==3.2.2
 torch==1.7.0
